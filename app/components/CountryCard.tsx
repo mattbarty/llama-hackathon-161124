@@ -1,9 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Globe2, Building2, Heart, Briefcase, Users, Home, BookOpen, Scale, ChevronLeft, X, Star } from 'lucide-react';
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useCountryData } from '@/app/contexts/CountryDataContext';
+import { LegalData } from '@/app/contexts/CountryDataContext';
 
 interface CountryCardProps {
   country: string;
@@ -83,8 +85,23 @@ const cityData: Record<string, CityInfo[]> = {
 };
 
 const CountryCard = ({ country = "Japan", onClose }: CountryCardProps) => {
+  const { getLegalData, isLoading } = useCountryData();
+  const [legalData, setLegalData] = useState<LegalData | null>(null);
   const [selectedCity, setSelectedCity] = useState<string | null>(null);
   const cities = cityData[country] || [];
+
+  useEffect(() => {
+    const loadLegalData = async () => {
+      try {
+        const data = await getLegalData(country);
+        setLegalData(data);
+      } catch (error) {
+        console.error('Failed to load legal data:', error);
+      }
+    };
+
+    loadLegalData();
+  }, [country, getLegalData]);
 
   const renderCityList = () => {
     const capital = cities.find(city => city.isCapital);
@@ -282,22 +299,30 @@ const CountryCard = ({ country = "Japan", onClose }: CountryCardProps) => {
           <TabsContent value="immigration" className="h-full data-[state=active]:flex flex-col">
             <ScrollArea className="flex-1">
               <div className="space-y-4 px-4 py-2">
-                <div className="space-y-2">
-                  <h3 className="font-semibold">Visa Requirements</h3>
-                  <p className="text-sm text-gray-600">90-day tourist visa on arrival for most passports</p>
-                </div>
-                <div className="space-y-2">
-                  <h3 className="font-semibold">Path to Residency</h3>
-                  <p className="text-sm text-gray-600">5 years of continuous residence required</p>
-                </div>
-                <div className="space-y-2">
-                  <h3 className="font-semibold">Required Documents</h3>
-                  <ul className="text-sm text-gray-600 list-disc pl-4">
-                    <li>Valid passport</li>
-                    <li>Proof of income</li>
-                    <li>Health insurance</li>
-                  </ul>
-                </div>
+                {isLoading ? (
+                  <div className="flex items-center justify-center h-full">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900" />
+                  </div>
+                ) : legalData ? (
+                  <>
+                    <div className="space-y-2">
+                      <h3 className="font-semibold">Visa Requirements</h3>
+                      <p className="text-sm text-gray-600">{legalData.visaRequirements}</p>
+                    </div>
+                    <div className="space-y-2">
+                      <h3 className="font-semibold">Path to Residency</h3>
+                      <p className="text-sm text-gray-600">{legalData.pathToResidency}</p>
+                    </div>
+                    <div className="space-y-2">
+                      <h3 className="font-semibold">Required Documents</h3>
+                      <ul className="text-sm text-gray-600 list-disc pl-4">
+                        {legalData.requiredDocuments.map((doc: string, index: number) => (
+                          <li key={index}>{doc}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  </>
+                ) : null}
               </div>
             </ScrollArea>
           </TabsContent>
