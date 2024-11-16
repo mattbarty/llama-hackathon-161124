@@ -60,6 +60,34 @@ export async function POST(request: Request) {
           "challenges": ["array", "of", "common", "challenges"]
         }
       }`;
+		} else if (section === 'culture') {
+			prompt = `Generate comprehensive cultural information for ${country}. Respond with ONLY a JSON object in the following format, with no additional text or formatting:
+      {
+        "society": {
+          "values": ["array of core societal values"],
+          "customs": ["array of important customs"],
+          "etiquette": ["array of etiquette rules"],
+          "taboos": ["array of social taboos"]
+        },
+        "lifestyle": {
+          "overview": "string describing daily life",
+          "socialLife": "string about social interactions",
+          "dating": "string about dating culture",
+          "familyLife": "string about family dynamics"
+        },
+        "language": {
+          "official": ["array of official languages"],
+          "common": "string about commonly used languages",
+          "businessEnglish": "string about English usage in business",
+          "usefulPhrases": ["simple string phrases or translations"]
+        },
+        "expats": {
+          "communities": ["array of major expat communities"],
+          "integration": "string about integration experience",
+          "socialGroups": "string about expat social groups and meetups",
+          "commonChallenges": ["array of common challenges faced by expats"]
+        }
+      }`;
 		} else {
 			return NextResponse.json({ error: 'Invalid section' }, { status: 400 });
 		}
@@ -116,6 +144,15 @@ export async function POST(request: Request) {
 					!generatedContent.foreignWorkers
 				) {
 					throw new Error('Invalid work response structure');
+				}
+			} else if (section === 'culture') {
+				if (
+					!generatedContent.society ||
+					!generatedContent.lifestyle ||
+					!generatedContent.language ||
+					!generatedContent.expats
+				) {
+					throw new Error('Invalid culture response structure');
 				}
 			} else {
 				// Validate the legal response structure
@@ -179,6 +216,33 @@ export async function POST(request: Request) {
 						opportunities: 'Information temporarily unavailable',
 						workPermits: 'Information temporarily unavailable',
 						challenges: ['Information unavailable'],
+					},
+				});
+			} else if (section === 'culture') {
+				return NextResponse.json({
+					society: {
+						values: ['Information unavailable'],
+						customs: ['Information unavailable'],
+						etiquette: ['Information unavailable'],
+						taboos: ['Information unavailable'],
+					},
+					lifestyle: {
+						overview: 'Information temporarily unavailable',
+						socialLife: 'Information temporarily unavailable',
+						dating: 'Information temporarily unavailable',
+						familyLife: 'Information temporarily unavailable',
+					},
+					language: {
+						official: ['Information unavailable'],
+						common: 'Information temporarily unavailable',
+						businessEnglish: 'Information temporarily unavailable',
+						usefulPhrases: ['Information unavailable'],
+					},
+					expats: {
+						communities: ['Information unavailable'],
+						integration: 'Information temporarily unavailable',
+						socialGroups: 'Information temporarily unavailable',
+						commonChallenges: ['Information unavailable'],
 					},
 				});
 			} else {

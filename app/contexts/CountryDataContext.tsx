@@ -54,10 +54,34 @@ export interface WorkData {
   };
 }
 
+export interface CultureData {
+  language: {
+    official: string[];
+    usefulPhrases: string[];
+    businessEnglish: string;
+  };
+  society: {
+    values: string[];
+    customs: string[];
+    etiquette: string[];
+  };
+  expats: {
+    integration: string;
+    communities: string[];
+    commonChallenges: string[];
+  };
+  lifestyle: {
+    overview: string;
+    socialLife: string;
+    familyLife: string;
+  };
+}
+
 interface CountryData {
   legal?: LegalData;
   quality?: QualityData;
   work?: WorkData;
+  culture?: CultureData;
 }
 
 interface CountryDataContextType {
@@ -65,6 +89,7 @@ interface CountryDataContextType {
   getLegalData: (country: string) => Promise<LegalData>;
   getQualityData: (country: string) => Promise<QualityData>;
   getWorkData: (country: string) => Promise<WorkData>;
+  getCultureData: (country: string) => Promise<CultureData>;
   isLoading: boolean;
 }
 
@@ -185,12 +210,50 @@ export function CountryDataProvider({ children }: { children: ReactNode; }) {
     }
   };
 
+  const getCultureData = async (country: string): Promise<CultureData> => {
+    if (countryData[country]?.culture) {
+      return countryData[country].culture!;
+    }
+
+    setIsLoading(true);
+    try {
+      const response = await fetch('/api/generateCountryData', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          country,
+          section: 'culture'
+        }),
+      });
+
+      const data = await response.json();
+
+      setCountryData(prev => ({
+        ...prev,
+        [country]: {
+          ...prev[country],
+          culture: data
+        }
+      }));
+
+      return data;
+    } catch (error) {
+      console.error('Failed to generate culture data:', error);
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <CountryDataContext.Provider value={{
       countryData,
       getLegalData,
       getQualityData,
       getWorkData,
+      getCultureData,
       isLoading
     }}>
       {children}

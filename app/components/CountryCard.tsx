@@ -4,7 +4,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Globe2, Building2, Heart, Briefcase, Users, Home, BookOpen, Scale, ChevronLeft, X, Star } from 'lucide-react';
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { QualityData, useCountryData } from '@/app/contexts/CountryDataContext';
+import { CultureData, QualityData, useCountryData } from '@/app/contexts/CountryDataContext';
 import { LegalData, WorkData } from '@/app/contexts/CountryDataContext';
 
 interface CountryCardProps {
@@ -85,17 +85,19 @@ const cityData: Record<string, CityInfo[]> = {
 };
 
 const CountryCard = ({ country = "Japan", onClose }: CountryCardProps) => {
-  const { getLegalData, getQualityData, getWorkData, isLoading } = useCountryData();
+  const { getLegalData, getQualityData, getWorkData, getCultureData, isLoading } = useCountryData();
   const [legalData, setLegalData] = useState<LegalData | null>(null);
   const [qualityData, setQualityData] = useState<QualityData | null>(null);
   const [workData, setWorkData] = useState<WorkData | null>(null);
+  const [cultureData, setCultureData] = useState<CultureData | null>(null);
   const [activeTab, setActiveTab] = useState('living');
   const [selectedCity, setSelectedCity] = useState<string | null>(null);
   const cities = cityData[country] || [];
   const [dataLoaded, setDataLoaded] = useState({
     legal: false,
     quality: false,
-    work: false
+    work: false,
+    culture: false
   });
 
   // Load data only when tab is selected
@@ -124,6 +126,13 @@ const CountryCard = ({ country = "Japan", onClose }: CountryCardProps) => {
               setDataLoaded(prev => ({ ...prev, work: true }));
             }
             break;
+          case 'culture':
+            if (!dataLoaded.culture) {
+              const data = await getCultureData(country);
+              setCultureData(data);
+              setDataLoaded(prev => ({ ...prev, culture: true }));
+            }
+            break;
         }
       } catch (error) {
         console.error(`Failed to load ${activeTab} data:`, error);
@@ -131,14 +140,15 @@ const CountryCard = ({ country = "Japan", onClose }: CountryCardProps) => {
     };
 
     loadData();
-  }, [activeTab, country, getLegalData, getQualityData, getWorkData, dataLoaded]);
+  }, [activeTab, country, getLegalData, getQualityData, getWorkData, getCultureData, dataLoaded]);
 
   // Reset loaded state when country changes
   useEffect(() => {
     setDataLoaded({
       legal: false,
       quality: false,
-      work: false
+      work: false,
+      culture: false
     });
   }, [country]);
 
@@ -552,25 +562,121 @@ const CountryCard = ({ country = "Japan", onClose }: CountryCardProps) => {
 
           <TabsContent value="culture" className="h-full data-[state=active]:flex flex-col">
             <ScrollArea className="flex-1">
-              <div className="space-y-4 px-4 py-2">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <h3 className="font-semibold">Languages</h3>
-                    <p className="text-sm text-gray-600">Japanese (English widely used)</p>
+              <div className="space-y-6 px-4 py-2">
+                {isLoading ? (
+                  <div className="flex items-center justify-center h-full">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900" />
                   </div>
-                  <div className="space-y-2">
-                    <h3 className="font-semibold">Expat Community</h3>
-                    <p className="text-sm text-gray-600">Large (2.9M foreigners)</p>
+                ) : cultureData ? (
+                  <>
+                    <div className="space-y-4">
+                      <h3 className="font-semibold text-lg">Society & Customs</h3>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <h4 className="font-medium">Core Values</h4>
+                          <ul className="list-disc list-inside text-sm text-gray-600">
+                            {cultureData.society.values.map((value: string, index: number) => (
+                              <li key={index}>{value}</li>
+                            ))}
+                          </ul>
+                        </div>
+                        <div className="space-y-2">
+                          <h4 className="font-medium">Important Customs</h4>
+                          <ul className="list-disc list-inside text-sm text-gray-600">
+                            {cultureData.society.customs.map((custom: string, index: number) => (
+                              <li key={index}>{custom}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <h4 className="font-medium">Etiquette</h4>
+                        <ul className="list-disc list-inside text-sm text-gray-600">
+                          {cultureData.society.etiquette.map((rule: string, index: number) => (
+                            <li key={index}>{rule}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    </div>
+
+                    <div className="space-y-4">
+                      <h3 className="font-semibold text-lg">Lifestyle</h3>
+                      <div className="space-y-2">
+                        <p className="text-sm text-gray-600">{cultureData.lifestyle.overview}</p>
+                        <div className="grid grid-cols-2 gap-4 mt-4">
+                          <div className="space-y-2">
+                            <h4 className="font-medium">Social Life</h4>
+                            <p className="text-sm text-gray-600">{cultureData.lifestyle.socialLife}</p>
+                          </div>
+                          <div className="space-y-2">
+                            <h4 className="font-medium">Family Life</h4>
+                            <p className="text-sm text-gray-600">{cultureData.lifestyle.familyLife}</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="space-y-4">
+                      <h3 className="font-semibold text-lg">Language</h3>
+                      <div className="space-y-2">
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                            <h4 className="font-medium">Official Languages</h4>
+                            <ul className="list-disc list-inside text-sm text-gray-600">
+                              {cultureData.language.official.map((lang: string, index: number) => (
+                                <li key={index}>{lang}</li>
+                              ))}
+                            </ul>
+                          </div>
+                          <div className="space-y-2">
+                            <h4 className="font-medium">Business English</h4>
+                            <p className="text-sm text-gray-600">{cultureData.language.businessEnglish}</p>
+                          </div>
+                        </div>
+                        <div className="mt-4">
+                          <h4 className="font-medium">Useful Phrases</h4>
+                          <ul className="list-disc list-inside text-sm text-gray-600">
+                            {cultureData.language.usefulPhrases.map((phrase: any, index: number) => (
+                              <li key={index}>
+                                {typeof phrase === 'object'
+                                  ? `${phrase.phrase} - ${phrase.translation}`
+                                  : phrase
+                                }
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="space-y-4">
+                      <h3 className="font-semibold text-lg">Expat Life</h3>
+                      <div className="space-y-2">
+                        <p className="text-sm text-gray-600">{cultureData.expats.integration}</p>
+                        <div className="mt-4">
+                          <h4 className="font-medium">Communities</h4>
+                          <ul className="list-disc list-inside text-sm text-gray-600">
+                            {cultureData.expats.communities.map((community: string, index: number) => (
+                              <li key={index}>{community}</li>
+                            ))}
+                          </ul>
+                        </div>
+                        <div className="mt-4">
+                          <h4 className="font-medium">Common Challenges</h4>
+                          <ul className="list-disc list-inside text-sm text-gray-600">
+                            {cultureData.expats.commonChallenges.map((challenge: string, index: number) => (
+                              <li key={index}>{challenge}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <div className="text-center text-gray-500">
+                    Failed to load cultural information
                   </div>
-                </div>
-                <div className="space-y-2">
-                  <h3 className="font-semibold">Cultural Notes</h3>
-                  <ul className="text-sm text-gray-600 list-disc pl-4">
-                    <li>Punctuality is highly valued</li>
-                    <li>Formal business culture</li>
-                    <li>Remove shoes indoors</li>
-                  </ul>
-                </div>
+                )}
               </div>
             </ScrollArea>
           </TabsContent>
