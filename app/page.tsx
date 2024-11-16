@@ -14,8 +14,8 @@ import { Label } from "@/components/ui/label";
 import { Plane, Navigation } from 'lucide-react';
 
 type Coordinates = {
-  lat: number;
-  lng: number;
+  lat: number | null;
+  lng: number | null;
   name: string;
 };
 
@@ -23,18 +23,24 @@ export default function Home() {
   const runningRef = useRef(false);
   const mapRef = useRef<mapboxgl.Map | null>(null);
   const [startCoords, setStartCoords] = useState<Coordinates>({
-    lat: 37.776,
-    lng: -122.414,
-    name: 'San Francisco'
+    lat: null,
+    lng: null,
+    name: 'Not selected'
   });
   const [endCoords, setEndCoords] = useState<Coordinates>({
-    lat: 38.913,
-    lng: -77.032,
-    name: 'Washington DC'
+    lat: null,
+    lng: null,
+    name: 'Not selected'
   });
 
   const createAnimation = () => {
     if (!mapRef.current) return;
+    if (!startCoords.lat || !startCoords.lng || !endCoords.lat || !endCoords.lng) {
+      // You might want to add a toast notification here
+      console.log('Please select both starting point and destination');
+      return;
+    }
+
     const map = mapRef.current;
 
     // Convert to Position type
@@ -181,9 +187,9 @@ export default function Home() {
     const map = new mapboxgl.Map({
       container: 'map',
       style: 'mapbox://styles/mapbox/dark-v11',
-      center: [-96, 35],
-      zoom: 3.2,
-      pitch: 40,
+      center: [0, 0],
+      zoom: 3,
+      projection: 'globe'
     });
 
     mapRef.current = map;
@@ -195,7 +201,7 @@ export default function Home() {
       flyTo: false,
       placeholder: 'Search for starting point',
       types: 'country,place',
-      limit: 5
+      limit: 3
     });
 
     const endGeocoder = new MapboxGeocoder({
@@ -231,11 +237,20 @@ export default function Home() {
       document.getElementById('start-geocoder')?.appendChild(startGeocoder.onAdd(map));
       document.getElementById('end-geocoder')?.appendChild(endGeocoder.onAdd(map));
 
-      createAnimation();
+      // Optional: Smooth transition to center
+      map.flyTo({
+        center: [0, 0],
+        zoom: 1.5,
+        speed: 0.8,
+        curve: 1,
+        essential: true
+      });
     });
 
     return () => map.remove();
   }, []);
+
+  const isReadyToAnimate = startCoords.lat && startCoords.lng && endCoords.lat && endCoords.lng;
 
   return (
     <main className="relative h-screen w-screen overflow-hidden">
@@ -247,7 +262,7 @@ export default function Home() {
             Flight Path Generator
           </CardTitle>
           <CardDescription>
-            Enter locations to create an animated flight path
+            Select two locations to create an animated flight path
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -257,36 +272,12 @@ export default function Home() {
               <Label className="text-sm font-medium">Starting Point</Label>
               <div id="start-geocoder" className="mb-2" />
               <p className="text-sm text-muted-foreground">
-                Selected: {startCoords.name}
+                {startCoords.name === 'Not selected' ? (
+                  <span className="text-yellow-600 dark:text-yellow-400">Please select a starting point</span>
+                ) : (
+                  <>Selected: {startCoords.name}</>
+                )}
               </p>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-2">
-                <Label htmlFor="start-lat" className="text-xs">Latitude</Label>
-                <Input
-                  id="start-lat"
-                  type="number"
-                  value={startCoords.lat}
-                  onChange={(e) => setStartCoords(prev => ({
-                    ...prev,
-                    lat: parseFloat(e.target.value)
-                  }))}
-                  className="h-8"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="start-lng" className="text-xs">Longitude</Label>
-                <Input
-                  id="start-lng"
-                  type="number"
-                  value={startCoords.lng}
-                  onChange={(e) => setStartCoords(prev => ({
-                    ...prev,
-                    lng: parseFloat(e.target.value)
-                  }))}
-                  className="h-8"
-                />
-              </div>
             </div>
           </div>
 
@@ -296,36 +287,12 @@ export default function Home() {
               <Label className="text-sm font-medium">Destination</Label>
               <div id="end-geocoder" className="mb-2" />
               <p className="text-sm text-muted-foreground">
-                Selected: {endCoords.name}
+                {endCoords.name === 'Not selected' ? (
+                  <span className="text-yellow-600 dark:text-yellow-400">Please select a destination</span>
+                ) : (
+                  <>Selected: {endCoords.name}</>
+                )}
               </p>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-2">
-                <Label htmlFor="end-lat" className="text-xs">Latitude</Label>
-                <Input
-                  id="end-lat"
-                  type="number"
-                  value={endCoords.lat}
-                  onChange={(e) => setEndCoords(prev => ({
-                    ...prev,
-                    lat: parseFloat(e.target.value)
-                  }))}
-                  className="h-8"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="end-lng" className="text-xs">Longitude</Label>
-                <Input
-                  id="end-lng"
-                  type="number"
-                  value={endCoords.lng}
-                  onChange={(e) => setEndCoords(prev => ({
-                    ...prev,
-                    lng: parseFloat(e.target.value)
-                  }))}
-                  className="h-8"
-                />
-              </div>
             </div>
           </div>
 
@@ -335,6 +302,7 @@ export default function Home() {
               onClick={createAnimation}
               className="w-full"
               variant="default"
+              disabled={!isReadyToAnimate}
             >
               <Navigation className="mr-2 h-4 w-4" />
               Start Animation
@@ -343,6 +311,7 @@ export default function Home() {
               id="replay"
               className="w-full"
               variant="secondary"
+              disabled={!isReadyToAnimate}
             >
               <Plane className="mr-2 h-4 w-4" />
               Replay Animation
