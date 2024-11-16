@@ -1,7 +1,9 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import mapboxgl from 'mapbox-gl';
+import mapboxgl, { Map } from 'mapbox-gl';
+import MapboxGeocoder from '@mapbox/mapbox-gl-geocoder';
+import '@mapbox/mapbox-gl-geocoder/dist/mapbox-gl-geocoder.css';
 import * as turf from '@turf/turf';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import type { Feature, FeatureCollection, LineString, Point, Position } from 'geojson';
@@ -9,13 +11,22 @@ import type { Feature, FeatureCollection, LineString, Point, Position } from 'ge
 type Coordinates = {
   lat: number;
   lng: number;
+  name: string;
 };
 
 export default function Home() {
   const runningRef = useRef(false);
   const mapRef = useRef<mapboxgl.Map | null>(null);
-  const [startCoords, setStartCoords] = useState<Coordinates>({ lat: 37.776, lng: -122.414 });
-  const [endCoords, setEndCoords] = useState<Coordinates>({ lat: 38.913, lng: -77.032 });
+  const [startCoords, setStartCoords] = useState<Coordinates>({
+    lat: 37.776,
+    lng: -122.414,
+    name: 'San Francisco'
+  });
+  const [endCoords, setEndCoords] = useState<Coordinates>({
+    lat: 38.913,
+    lng: -77.032,
+    name: 'Washington DC'
+  });
 
   const createAnimation = () => {
     if (!mapRef.current) return;
@@ -172,7 +183,47 @@ export default function Home() {
 
     mapRef.current = map;
 
-    map.on('load', createAnimation);
+    const startGeocoder = new MapboxGeocoder({
+      accessToken: mapboxgl.accessToken,
+      mapboxgl: mapboxgl as any,
+      marker: false,
+      flyTo: false,
+      placeholder: 'Search for starting point'
+    });
+
+    const endGeocoder = new MapboxGeocoder({
+      accessToken: mapboxgl.accessToken,
+      mapboxgl: mapboxgl as any,
+      marker: false,
+      flyTo: false,
+      placeholder: 'Search for destination'
+    });
+
+    startGeocoder.on('result', (e) => {
+      const coords = e.result.geometry.coordinates;
+      setStartCoords({
+        lng: coords[0],
+        lat: coords[1],
+        name: e.result.place_name
+      });
+    });
+
+    endGeocoder.on('result', (e) => {
+      const coords = e.result.geometry.coordinates;
+      setEndCoords({
+        lng: coords[0],
+        lat: coords[1],
+        name: e.result.place_name
+      });
+    });
+
+    map.on('load', () => {
+      // Add geocoder controls to their containers
+      document.getElementById('start-geocoder')?.appendChild(startGeocoder.onAdd(map));
+      document.getElementById('end-geocoder')?.appendChild(endGeocoder.onAdd(map));
+
+      createAnimation();
+    });
 
     return () => map.remove();
   }, []);
@@ -184,39 +235,59 @@ export default function Home() {
         <div className="space-y-4">
           <div>
             <h3 className="font-semibold mb-2">Starting Point</h3>
-            <div className="grid grid-cols-2 gap-2">
+            <div id="start-geocoder" className="mb-2" />
+            <div className="text-sm text-gray-600">
+              Selected: {startCoords.name}
+            </div>
+            <div className="grid grid-cols-2 gap-2 mt-2">
               <input
                 type="number"
                 value={startCoords.lat}
-                onChange={(e) => setStartCoords(prev => ({ ...prev, lat: parseFloat(e.target.value) }))}
+                onChange={(e) => setStartCoords(prev => ({
+                  ...prev,
+                  lat: parseFloat(e.target.value)
+                }))}
                 placeholder="Latitude"
-                className="border p-1 rounded"
+                className="border p-1 rounded text-sm"
               />
               <input
                 type="number"
                 value={startCoords.lng}
-                onChange={(e) => setStartCoords(prev => ({ ...prev, lng: parseFloat(e.target.value) }))}
+                onChange={(e) => setStartCoords(prev => ({
+                  ...prev,
+                  lng: parseFloat(e.target.value)
+                }))}
                 placeholder="Longitude"
-                className="border p-1 rounded"
+                className="border p-1 rounded text-sm"
               />
             </div>
           </div>
           <div>
             <h3 className="font-semibold mb-2">Destination</h3>
-            <div className="grid grid-cols-2 gap-2">
+            <div id="end-geocoder" className="mb-2" />
+            <div className="text-sm text-gray-600">
+              Selected: {endCoords.name}
+            </div>
+            <div className="grid grid-cols-2 gap-2 mt-2">
               <input
                 type="number"
                 value={endCoords.lat}
-                onChange={(e) => setEndCoords(prev => ({ ...prev, lat: parseFloat(e.target.value) }))}
+                onChange={(e) => setEndCoords(prev => ({
+                  ...prev,
+                  lat: parseFloat(e.target.value)
+                }))}
                 placeholder="Latitude"
-                className="border p-1 rounded"
+                className="border p-1 rounded text-sm"
               />
               <input
                 type="number"
                 value={endCoords.lng}
-                onChange={(e) => setEndCoords(prev => ({ ...prev, lng: parseFloat(e.target.value) }))}
+                onChange={(e) => setEndCoords(prev => ({
+                  ...prev,
+                  lng: parseFloat(e.target.value)
+                }))}
                 placeholder="Longitude"
-                className="border p-1 rounded"
+                className="border p-1 rounded text-sm"
               />
             </div>
           </div>
