@@ -75,3 +75,53 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* MapboxGeocoder Input Styling */
+.mapboxgl-ctrl-geocoder {
+  width: 100% !important;
+  max-width: none !important;
+  box-shadow: none !important;
+  background-color: transparent !important;
+}
+
+.mapboxgl-ctrl-geocoder input[type='text'] {
+  width: 100% !important;
+  padding: 0.5rem 2.5rem !important;
+  border-radius: 0.5rem !important;
+  border: 1px solid #e2e8f0 !important;
+  background: white !important;
+  font-size: 0.875rem !important;
+}
+
+.mapboxgl-ctrl-geocoder input[type='text']:focus {
+  outline: none !important;
+  border-color: #3b82f6 !important;
+  ring: 2px !important;
+}
+
+/* Hide the MapboxGeocoder default icons */
+.mapboxgl-ctrl-geocoder--icon {
+  display: none !important;
+}
+
+.mapboxgl-ctrl-geocoder--button {
+  display: none !important;
+}
+
+/* Style the suggestions dropdown */
+.suggestions {
+  background-color: white !important;
+  border-radius: 0.5rem !important;
+  border: 1px solid #e2e8f0 !important;
+  margin-top: 0.25rem !important;
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1) !important;
+}
+
+.suggestions>li>a {
+  padding: 0.5rem 1rem !important;
+  font-size: 0.875rem !important;
+}
+
+.suggestions>li:hover {
+  background-color: #f8fafc !important;
+}

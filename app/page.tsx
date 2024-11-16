@@ -9,7 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Plane, Navigation } from 'lucide-react';
+import { Plane, Navigation, Search, Globe } from 'lucide-react';
 import { UserProfile } from "./components/UserProfile";
 import { useUser } from './contexts/UserContext';
 import CountryCard from './components/CountryCard';
@@ -34,14 +34,31 @@ export default function Home() {
 
     mapRef.current = map;
 
+    // Clear any existing geocoder
+    const existingGeocoder = document.getElementById('location-search');
+    if (existingGeocoder) {
+      existingGeocoder.innerHTML = '';
+    }
+
     const searchGeocoder = new MapboxGeocoder({
       accessToken: mapboxgl.accessToken,
       mapboxgl: mapboxgl as any,
       marker: false,
-      placeholder: 'Search for a location',
+      placeholder: 'Search for a city or country',
       types: 'country,place',
-      limit: 5
+      limit: 5,
+      language: 'en',
+      bbox: [-180, -90, 180, 90],
+      fuzzyMatch: true,
+      autocomplete: true,
+      minLength: 1
     });
+
+    // Add geocoder control to its container
+    const searchContainer = document.getElementById('location-search');
+    if (searchContainer && !searchContainer.hasChildNodes()) {
+      searchContainer.appendChild(searchGeocoder.onAdd(map));
+    }
 
     // Handle selection of a location
     searchGeocoder.on('result', (event) => {
@@ -72,9 +89,6 @@ export default function Home() {
     });
 
     map.on('load', () => {
-      // Add geocoder control to its container
-      document.getElementById('location-search')?.appendChild(searchGeocoder.onAdd(map));
-
       // Add source for country boundaries
       map.addSource('countries', {
         type: 'vector',
@@ -164,9 +178,13 @@ export default function Home() {
     });
 
     return () => {
-      // Clean up marker when component unmounts
       if (markerRef.current) {
         markerRef.current.remove();
+      }
+      // Clean up geocoder
+      const searchContainer = document.getElementById('location-search');
+      if (searchContainer) {
+        searchContainer.innerHTML = '';
       }
       map.remove();
     };
@@ -175,30 +193,25 @@ export default function Home() {
   return (
     <main className="relative h-screen w-screen overflow-hidden">
       <div id="map" className="absolute inset-0" />
-      <UserProfile />
 
-      {/* Search Card - Left Side */}
-      <Card className="absolute top-4 left-4 z-10 w-[350px] shadow-lg">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Navigation className="h-5 w-5" />
-            Location Search
-          </CardTitle>
-          <CardDescription>
-            Search for a city or country to focus the map
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div id="location-search" />
-        </CardContent>
-      </Card>
-
-      {/* Country Card - Right Side */}
-      {selectedCountry && (
-        <div className="absolute top-4 right-4 z-10 w-[450px]">
-          <CountryCard country={selectedCountry} />
+      <div className="flex flex-col absolute w-[450px] top-4 right-4 z-10 gap-4">
+        <div className="flex items-center gap-2 bg-white p-2 rounded-lg">
+          <div className="flex items-center gap-2 w-full relative">
+            <div id="location-search" className="w-full h-10 z-20 py-1">
+              {/* MapboxGeocoder will inject its input here */}
+            </div>
+            <Globe className="h-5 w-5 absolute left-2 text-gray-500 pointer-events-none z-30 top-1/2 -translate-y-1/2" />
+            <Navigation className="h-5 w-5 absolute right-2 text-gray-500 pointer-events-none z-30 top-1/2 -translate-y-1/2" />
+          </div>
         </div>
-      )}
+        {/* Country Card - Right Side */}
+        {selectedCountry && (
+          <div className="z-10">
+            <CountryCard country={selectedCountry} onClose={() => setSelectedCountry(null)} />
+          </div>
+        )}
+      </div>
+
     </main>
   );
 }
