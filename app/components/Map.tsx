@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, forwardRef, useImperativeHandle } from 'react';
 import mapboxgl from 'mapbox-gl';
 import MapboxGeocoder from '@mapbox/mapbox-gl-geocoder';
 import '@mapbox/mapbox-gl-geocoder/dist/mapbox-gl-geocoder.css';
@@ -18,7 +18,7 @@ interface MapProps {
   isChatVisible: boolean;
 }
 
-export default function Map({ isChatVisible }: MapProps) {
+const Map = forwardRef(({ isChatVisible }: MapProps, ref) => {
   const mapRef = useRef<mapboxgl.Map | null>(null);
   const markerRef = useRef<mapboxgl.Marker | null>(null);
   const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
@@ -213,6 +213,60 @@ export default function Map({ isChatVisible }: MapProps) {
     };
   }, []);
 
+  useImperativeHandle(ref, () => ({
+    focusOnCountry: (countryName: string) => {
+      setSelectedCountry(countryName);
+
+      const map = mapRef.current;
+      if (map) {
+        const searchGeocoder = new MapboxGeocoder({
+          accessToken: mapboxgl.accessToken,
+          mapboxgl: mapboxgl as any,
+          marker: false,
+          types: 'country',
+          limit: 1
+        });
+
+        // Add the geocoder to the map temporarily
+        const container = document.createElement('div');
+        container.style.display = 'none';
+        document.body.appendChild(container);
+        container.appendChild(searchGeocoder.onAdd(map));
+
+        // Set up the result handler before querying
+        searchGeocoder.on('result', (event) => {
+          const result = event.result;
+
+          map.flyTo({
+            center: result.center,
+            zoom: 5,
+            essential: true
+          });
+
+          if (markerRef.current) {
+            markerRef.current.setLngLat(result.center);
+          } else {
+            markerRef.current = new mapboxgl.Marker()
+              .setLngLat(result.center)
+              .addTo(map);
+          }
+
+          // Clean up
+          container.remove();
+        });
+
+        // Handle errors
+        searchGeocoder.on('error', () => {
+          console.error('Failed to geocode country:', countryName);
+          container.remove();
+        });
+
+        // Now perform the query
+        searchGeocoder.query(countryName);
+      }
+    }
+  }));
+
   return (
     <div className="relative h-full w-full overflow-hidden bg-black">
       <div
@@ -261,4 +315,6 @@ export default function Map({ isChatVisible }: MapProps) {
       )}
     </div>
   );
-}
+});
+
+export default Map;

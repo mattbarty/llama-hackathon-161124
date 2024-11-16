@@ -1,5 +1,6 @@
 import { ReactNode } from 'react';
 import { countries } from '../lib/countries';
+import { useMap } from '@/app/contexts/MapContext';
 
 interface InteractiveMessageProps {
   role: 'user' | 'assistant';
@@ -8,6 +9,8 @@ interface InteractiveMessageProps {
 }
 
 export default function InteractiveMessage({ role, content, isLoading = false }: InteractiveMessageProps) {
+  const { focusCountry } = useMap();
+
   const highlightCountries = (text: string) => {
     // Create a regex pattern that matches whole words only
     const countryPattern = new RegExp(`\\b(${countries.join('|')})\\b`, 'g');
@@ -18,7 +21,15 @@ export default function InteractiveMessage({ role, content, isLoading = false }:
     return parts.map((part, index) => {
       // Check if this part is a country
       if (countries.includes(part)) {
-        return <span key={index} className="text-sky-500">{part}</span>;
+        return (
+          <button
+            key={index}
+            onClick={() => focusCountry(part)}
+            className="text-sky-500 hover:text-sky-700 hover:underline"
+          >
+            {part}
+          </button>
+        );
       }
       return part;
     });
