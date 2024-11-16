@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Plane, Navigation } from 'lucide-react';
 import { UserProfile } from "./components/UserProfile";
 import { useUser } from './contexts/UserContext';
+import CountryCard from './components/CountryCard';
 
 export default function Home() {
   const mapRef = useRef<mapboxgl.Map | null>(null);
@@ -150,7 +151,9 @@ export default function Home() {
     <main className="relative h-screen w-screen overflow-hidden">
       <div id="map" className="absolute inset-0" />
       <UserProfile />
-      <Card className="absolute top-4 left-4 z-10 w-[400px] shadow-lg">
+
+      {/* Search Card - Left Side */}
+      <Card className="absolute top-4 left-4 z-10 w-[350px] shadow-lg">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Navigation className="h-5 w-5" />
@@ -160,22 +163,17 @@ export default function Home() {
             Search for a city or country to focus the map
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-6">
+        <CardContent>
           <div id="location-search" />
-          {selectedCountry && (
-            <div className="text-sm">
-              <Label>Selected Country:</Label>
-              <div className="mt-1">{selectedCountry}</div>
-            </div>
-          )}
-          {selectedCity && (
-            <div className="text-sm">
-              <Label>Selected City:</Label>
-              <div className="mt-1">{selectedCity}</div>
-            </div>
-          )}
         </CardContent>
       </Card>
+
+      {/* Country Card - Right Side */}
+      {selectedCountry && (
+        <div className="absolute top-4 right-4 z-10 w-[450px]">
+          <CountryCard country={selectedCountry} />
+        </div>
+      )}
     </main>
   );
 }
