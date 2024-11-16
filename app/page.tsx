@@ -63,6 +63,84 @@ export default function Home() {
     map.on('load', () => {
       // Add geocoder control to its container
       document.getElementById('location-search')?.appendChild(searchGeocoder.onAdd(map));
+
+      // Add source for country boundaries
+      map.addSource('countries', {
+        type: 'vector',
+        url: 'mapbox://mapbox.country-boundaries-v1'
+      });
+
+      // Add a layer for country fills (invisible but hoverable)
+      map.addLayer({
+        id: 'country-fills',
+        type: 'fill',
+        source: 'countries',
+        'source-layer': 'country_boundaries',
+        paint: {
+          'fill-color': '#627BC1',
+          'fill-opacity': 0
+        }
+      });
+
+      // Create a popup but don't add it to the map yet
+      const popup = new mapboxgl.Popup({
+        closeButton: false,
+        closeOnClick: false
+      });
+
+      // Add a ref for the timeout
+      let hoverTimeout: NodeJS.Timeout | null = null;
+
+      // Handle mouse enter/move
+      map.on('mousemove', 'country-fills', (e) => {
+        if (e.features && e.features[0]) {
+          map.getCanvas().style.cursor = 'pointer';
+
+          // Store the necessary data outside the timeout
+          const countryName = e.features[0].properties?.name_en;
+          const lngLat = e.lngLat;
+
+          // Clear any existing timeout
+          if (hoverTimeout) {
+            clearTimeout(hoverTimeout);
+          }
+
+          // Set new timeout using the stored data
+          hoverTimeout = setTimeout(() => {
+            popup
+              .setLngLat(lngLat)
+              .setHTML(countryName)
+              .addTo(map);
+          }, 1000); // 1 second delay
+        }
+      });
+
+      // Handle mouse leave
+      map.on('mouseleave', 'country-fills', () => {
+        map.getCanvas().style.cursor = '';
+        // Clear the timeout if it exists
+        if (hoverTimeout) {
+          clearTimeout(hoverTimeout);
+          hoverTimeout = null;
+        }
+        popup.remove();
+      });
+
+      // Handle click on country
+      map.on('click', 'country-fills', (e) => {
+        if (e.features && e.features[0]) {
+          const countryName = e.features[0].properties?.name_en;
+          setSelectedCountry(countryName);
+          setSelectedCity(null);
+
+          // Fly to the clicked location
+          map.flyTo({
+            center: e.lngLat,
+            zoom: 4,
+            essential: true
+          });
+        }
+      });
     });
 
     return () => map.remove();
