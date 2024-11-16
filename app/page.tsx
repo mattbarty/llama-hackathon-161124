@@ -21,6 +21,18 @@ type Coordinates = {
   name: string;
 };
 
+type Destination = {
+  name: string;
+  coordinates: [number, number];
+};
+
+const DESTINATIONS: Destination[] = [
+  { name: "Beijing, China", coordinates: [116.4074, 39.9042] },
+  { name: "Singapore", coordinates: [103.8198, 1.3521] },
+  { name: "Los Angeles, USA", coordinates: [-118.2437, 34.0522] },
+  { name: "Paris, France", coordinates: [2.3522, 48.8566] }
+];
+
 export default function Home() {
   const runningRef = useRef(false);
   const mapRef = useRef<mapboxgl.Map | null>(null);
@@ -35,6 +47,7 @@ export default function Home() {
     name: 'Not selected'
   });
   const user = useUser();
+  const [isAnimating, setIsAnimating] = useState(false);
 
   const createAnimation = () => {
     if (!mapRef.current) return;
@@ -184,6 +197,70 @@ export default function Home() {
     animate();
   };
 
+  const createMultipleFlightPaths = async () => {
+    if (!mapRef.current || !startCoords.lat || !startCoords.lng) return;
+
+    setIsAnimating(true);
+    const map = mapRef.current;
+
+    // Clear existing layers and sources
+    ['point', 'route'].forEach(layer => {
+      if (map.getLayer(layer)) map.removeLayer(layer);
+      if (map.getSource(layer)) map.removeSource(layer);
+    });
+
+    // Create a bounds object to encompass all routes
+    const bounds = new mapboxgl.LngLatBounds();
+    bounds.extend([startCoords.lng, startCoords.lat]);
+
+    // Create all routes
+    const routes = DESTINATIONS.map((dest) => {
+      bounds.extend(dest.coordinates);
+
+      return {
+        type: 'Feature',
+        properties: {},
+        geometry: {
+          type: 'LineString',
+          coordinates: [
+            [startCoords.lng, startCoords.lat],
+            dest.coordinates
+          ]
+        }
+      };
+    });
+
+    const routeCollection: FeatureCollection<LineString> = {
+      type: 'FeatureCollection',
+      features: routes as Feature<LineString>[]
+    };
+
+    // Add routes source and layer
+    map.addSource('routes', {
+      type: 'geojson',
+      data: routeCollection
+    });
+
+    map.addLayer({
+      id: 'routes',
+      source: 'routes',
+      type: 'line',
+      paint: {
+        'line-width': 2,
+        'line-color': '#007cbf',
+        'line-opacity': 0.6
+      }
+    });
+
+    // Fit bounds to show all routes
+    map.fitBounds(bounds, {
+      padding: { top: 50, bottom: 50, left: 50, right: 50 },
+      duration: 2000
+    });
+
+    setIsAnimating(false);
+  };
+
   useEffect(() => {
     mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN || '';
 
@@ -206,13 +283,21 @@ export default function Home() {
 
         if (data.features && data.features.length > 0) {
           const [lng, lat] = data.features[0].center;
-          map.flyTo({
-            center: [lng, lat],
-            zoom: 2, // Maintain the zoom level
-            speed: 0.5, // Adjust animation speed (0.2 is very slow, 1.2 is very fast)
-            curve: 1, // Change this value to adjust the animation curve
-            essential: true // This animation is considered essential for the map's functionality
+          setStartCoords({
+            lng,
+            lat,
+            name: user.currentLocation
           });
+
+          if (!isAnimating) {
+            map.flyTo({
+              center: [lng, lat],
+              zoom: 2,
+              speed: 0.5,
+              curve: 1,
+              essential: true
+            });
+          }
         }
       } catch (error) {
         console.error('Error centering on user location:', error);
@@ -262,12 +347,11 @@ export default function Home() {
       document.getElementById('start-geocoder')?.appendChild(startGeocoder.onAdd(map));
       document.getElementById('end-geocoder')?.appendChild(endGeocoder.onAdd(map));
 
-      // Center on user location after map loads
       centerOnUserLocation();
     });
 
     return () => map.remove();
-  }, [user.currentLocation]);
+  }, [user.currentLocation, isAnimating]);
 
   const isReadyToAnimate = startCoords.lat && startCoords.lng && endCoords.lat && endCoords.lng;
 
@@ -335,6 +419,15 @@ export default function Home() {
             >
               <Plane className="mr-2 h-4 w-4" />
               Replay Animation
+            </Button>
+            <Button
+              onClick={createMultipleFlightPaths}
+              className="w-full"
+              variant="default"
+              disabled={!startCoords.lat || !startCoords.lng}
+            >
+              <Plane className="mr-2 h-4 w-4" />
+              Show All Flight Paths
             </Button>
           </div>
         </CardContent>
