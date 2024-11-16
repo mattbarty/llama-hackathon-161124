@@ -21,46 +21,23 @@ interface MapProps {
 const Map = forwardRef(({ isChatVisible }: MapProps, ref) => {
   const mapRef = useRef<mapboxgl.Map | null>(null);
   const markerRef = useRef<mapboxgl.Marker | null>(null);
+  const geocoderRef = useRef<MapboxGeocoder | null>(null);
   const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
   const [selectedCity, setSelectedCity] = useState<string | null>(null);
   const user = useUser();
 
-  useEffect(() => {
-    // Wait for the container to be available
-    const container = document.getElementById('map');
-    if (!container) return;
-
-    mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN || '';
-
-    const map = new mapboxgl.Map({
-      container: 'map',
-      style: 'mapbox://styles/mapbox/dark-v11',
-      center: [0, 0],
-      zoom: 2,
-      projection: 'globe'
-    });
-
-    // Add resize handler
-    const resizeMap = () => {
-      if (mapRef.current) {
-        mapRef.current.resize();
-      }
-    };
-
-    // Add resize observer to handle container size changes
-    const resizeObserver = new ResizeObserver(() => {
-      resizeMap();
-    });
-
-    resizeObserver.observe(container);
-
-    mapRef.current = map;
-
+  // Function to initialize or reinitialize the geocoder
+  const initializeGeocoder = (map: mapboxgl.Map) => {
     // Clear any existing geocoder
-    const existingGeocoder = document.getElementById('location-search');
-    if (existingGeocoder) {
-      existingGeocoder.innerHTML = '';
+    if (geocoderRef.current) {
+      geocoderRef.current.onRemove();
+      geocoderRef.current = null;
     }
+
+    const searchContainer = document.getElementById('location-search');
+    if (!searchContainer) return;
+
+    searchContainer.innerHTML = '';
 
     const searchGeocoder = new MapboxGeocoder({
       accessToken: mapboxgl.accessToken,
@@ -76,9 +53,10 @@ const Map = forwardRef(({ isChatVisible }: MapProps, ref) => {
       minLength: 1
     });
 
+    geocoderRef.current = searchGeocoder;
+
     // Add geocoder control to its container
-    const searchContainer = document.getElementById('location-search');
-    if (searchContainer && !searchContainer.hasChildNodes()) {
+    if (!searchContainer.hasChildNodes()) {
       searchContainer.appendChild(searchGeocoder.onAdd(map));
     }
 
@@ -109,109 +87,83 @@ const Map = forwardRef(({ isChatVisible }: MapProps, ref) => {
         essential: true
       });
     });
+  };
 
-    map.on('load', () => {
-      // Add source for country boundaries
-      map.addSource('countries', {
-        type: 'vector',
-        url: 'mapbox://mapbox.country-boundaries-v1'
-      });
+  // Effect for map initialization
+  useEffect(() => {
+    const container = document.getElementById('map');
+    if (!container) return;
 
-      // Add a layer for country fills (invisible but hoverable)
-      map.addLayer({
-        id: 'country-fills',
-        type: 'fill',
-        source: 'countries',
-        'source-layer': 'country_boundaries',
-        paint: {
-          'fill-color': '#627BC1',
-          'fill-opacity': 0
-        }
-      });
+    mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN || '';
 
-      // Create a popup but don't add it to the map yet
-      const popup = new mapboxgl.Popup({
-        closeButton: false,
-        closeOnClick: false
-      });
-
-      // Add a ref for the timeout
-      let hoverTimeout: NodeJS.Timeout | null = null;
-
-      // Handle mouse enter/move
-      map.on('mousemove', 'country-fills', (e) => {
-        if (e.features && e.features[0]) {
-          map.getCanvas().style.cursor = 'pointer';
-
-          // Store the necessary data outside the timeout
-          const countryName = e.features[0].properties?.name_en;
-          const lngLat = e.lngLat;
-
-          // Clear any existing timeout
-          if (hoverTimeout) {
-            clearTimeout(hoverTimeout);
-          }
-
-          // Set new timeout using the stored data
-          hoverTimeout = setTimeout(() => {
-            popup
-              .setLngLat(lngLat)
-              .setHTML(countryName)
-              .addTo(map);
-          }, 1000); // 1 second delay
-        }
-      });
-
-      // Handle mouse leave
-      map.on('mouseleave', 'country-fills', () => {
-        map.getCanvas().style.cursor = '';
-        // Clear the timeout if it exists
-        if (hoverTimeout) {
-          clearTimeout(hoverTimeout);
-          hoverTimeout = null;
-        }
-        popup.remove();
-      });
-
-      // Handle click on country
-      map.on('click', 'country-fills', (e) => {
-        if (e.features && e.features[0]) {
-          const countryName = e.features[0].properties?.name_en;
-          setSelectedCountry(countryName);
-          setSelectedCity(null);
-
-          // Update or create marker
-          if (markerRef.current) {
-            markerRef.current.setLngLat(e.lngLat);
-          } else {
-            markerRef.current = new mapboxgl.Marker()
-              .setLngLat(e.lngLat)
-              .addTo(map);
-          }
-
-          // Fly to the clicked location
-          map.flyTo({
-            center: e.lngLat,
-            zoom: 5,
-            essential: true
-          });
-        }
-      });
+    const map = new mapboxgl.Map({
+      container: 'map',
+      style: 'mapbox://styles/mapbox/dark-v11',
+      center: [0, 0],
+      zoom: 2,
+      projection: 'globe'
     });
 
+    mapRef.current = map;
+
+    // Initialize geocoder after map is loaded
+    map.on('load', () => {
+      initializeGeocoder(map);
+    });
+
+    // Add resize handler
+    const resizeMap = () => {
+      if (mapRef.current) {
+        mapRef.current.resize();
+      }
+    };
+
+    // Add resize observer
+    const resizeObserver = new ResizeObserver(() => {
+      resizeMap();
+    });
+
+    resizeObserver.observe(container);
+
+    // Cleanup function
     return () => {
       resizeObserver.disconnect();
+
+      // First remove the marker if it exists
       if (markerRef.current) {
         markerRef.current.remove();
+        markerRef.current = null;
       }
-      // Clean up geocoder
-      const searchContainer = document.getElementById('location-search');
-      if (searchContainer) {
-        searchContainer.innerHTML = '';
+
+      // Then remove the geocoder if it exists
+      if (geocoderRef.current) {
+        const searchContainer = document.getElementById('location-search');
+        if (searchContainer) {
+          searchContainer.innerHTML = '';
+        }
+        geocoderRef.current = null;
       }
-      map.remove();
+
+      // Finally remove the map
+      if (mapRef.current) {
+        mapRef.current.remove();
+        mapRef.current = null;
+      }
     };
   }, []);
+
+  // Effect to handle search container visibility
+  useEffect(() => {
+    // Small delay to ensure DOM is ready
+    const timer = setTimeout(() => {
+      const searchContainer = document.getElementById('location-search');
+      if (searchContainer && mapRef.current && !searchContainer.hasChildNodes()) {
+        initializeGeocoder(mapRef.current);
+      }
+    }, 100);
+
+    return () => clearTimeout(timer);
+  }, [isChatVisible]);
 
   useImperativeHandle(ref, () => ({
     focusOnCountry: (countryName: string) => {
