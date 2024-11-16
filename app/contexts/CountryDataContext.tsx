@@ -30,15 +30,41 @@ export interface QualityData {
   };
 }
 
+export interface WorkData {
+  jobMarket: {
+    overview: string;
+    inDemandSectors: string[];
+    averageSalaries: string;
+    unemployment: string;
+  };
+  businessEnvironment: {
+    startupScene: string;
+    majorEmployers: string[];
+    regulations: string;
+  };
+  workCulture: {
+    workLifeBalance: string;
+    officeHours: string;
+    practices: string[];
+  };
+  foreignWorkers: {
+    opportunities: string;
+    workPermits: string;
+    challenges: string[];
+  };
+}
+
 interface CountryData {
   legal?: LegalData;
   quality?: QualityData;
+  work?: WorkData;
 }
 
 interface CountryDataContextType {
   countryData: Record<string, CountryData>;
   getLegalData: (country: string) => Promise<LegalData>;
   getQualityData: (country: string) => Promise<QualityData>;
+  getWorkData: (country: string) => Promise<WorkData>;
   isLoading: boolean;
 }
 
@@ -122,11 +148,49 @@ export function CountryDataProvider({ children }: { children: ReactNode; }) {
     }
   };
 
+  const getWorkData = async (country: string): Promise<WorkData> => {
+    if (countryData[country]?.work) {
+      return countryData[country].work!;
+    }
+
+    setIsLoading(true);
+    try {
+      const response = await fetch('/api/generateCountryData', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          country,
+          section: 'work'
+        }),
+      });
+
+      const data = await response.json();
+
+      setCountryData(prev => ({
+        ...prev,
+        [country]: {
+          ...prev[country],
+          work: data
+        }
+      }));
+
+      return data;
+    } catch (error) {
+      console.error('Failed to generate work data:', error);
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <CountryDataContext.Provider value={{
       countryData,
       getLegalData,
       getQualityData,
+      getWorkData,
       isLoading
     }}>
       {children}

@@ -35,6 +35,31 @@ export async function POST(request: Request) {
           "internationalSchools": "string about international schools"
         }
       }`;
+		} else if (section === 'work') {
+			prompt = `Generate comprehensive work and employment information for ${country}. Respond with ONLY a JSON object in the following format, with no additional text or formatting:
+      {
+        "jobMarket": {
+          "overview": "string describing the current job market",
+          "inDemandSectors": ["array", "of", "in-demand", "sectors"],
+          "averageSalaries": "string describing salary ranges",
+          "unemployment": "string with unemployment rate and context"
+        },
+        "businessEnvironment": {
+          "startupScene": "string describing startup ecosystem",
+          "majorEmployers": ["array", "of", "major", "companies"],
+          "regulations": "string describing business regulations"
+        },
+        "workCulture": {
+          "workLifeBalance": "string describing work-life balance",
+          "officeHours": "string describing typical working hours",
+          "practices": ["array", "of", "workplace", "practices"]
+        },
+        "foreignWorkers": {
+          "opportunities": "string describing opportunities for foreigners",
+          "workPermits": "string describing work permit process",
+          "challenges": ["array", "of", "common", "challenges"]
+        }
+      }`;
 		} else {
 			return NextResponse.json({ error: 'Invalid section' }, { status: 400 });
 		}
@@ -83,8 +108,17 @@ export async function POST(request: Request) {
 				) {
 					throw new Error('Invalid quality response structure');
 				}
+			} else if (section === 'work') {
+				if (
+					!generatedContent.jobMarket ||
+					!generatedContent.businessEnvironment ||
+					!generatedContent.workCulture ||
+					!generatedContent.foreignWorkers
+				) {
+					throw new Error('Invalid work response structure');
+				}
 			} else {
-				// Validate the response structure
+				// Validate the legal response structure
 				if (
 					!generatedContent.visaRequirements ||
 					!generatedContent.pathToResidency ||
@@ -123,8 +157,32 @@ export async function POST(request: Request) {
 						internationalSchools: 'Information temporarily unavailable',
 					},
 				});
+			} else if (section === 'work') {
+				return NextResponse.json({
+					jobMarket: {
+						overview: 'Information temporarily unavailable',
+						inDemandSectors: ['Information unavailable'],
+						averageSalaries: 'Information temporarily unavailable',
+						unemployment: 'Information temporarily unavailable',
+					},
+					businessEnvironment: {
+						startupScene: 'Information temporarily unavailable',
+						majorEmployers: ['Information unavailable'],
+						regulations: 'Information temporarily unavailable',
+					},
+					workCulture: {
+						workLifeBalance: 'Information temporarily unavailable',
+						officeHours: 'Information temporarily unavailable',
+						practices: ['Information unavailable'],
+					},
+					foreignWorkers: {
+						opportunities: 'Information temporarily unavailable',
+						workPermits: 'Information temporarily unavailable',
+						challenges: ['Information unavailable'],
+					},
+				});
 			} else {
-				// Return a fallback response
+				// Return a legal fallback response
 				return NextResponse.json({
 					visaRequirements: 'Information temporarily unavailable',
 					pathToResidency: 'Information temporarily unavailable',

@@ -5,7 +5,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Globe2, Building2, Heart, Briefcase, Users, Home, BookOpen, Scale, ChevronLeft, X, Star } from 'lucide-react';
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { QualityData, useCountryData } from '@/app/contexts/CountryDataContext';
-import { LegalData } from '@/app/contexts/CountryDataContext';
+import { LegalData, WorkData } from '@/app/contexts/CountryDataContext';
 
 interface CountryCardProps {
   country: string;
@@ -85,37 +85,62 @@ const cityData: Record<string, CityInfo[]> = {
 };
 
 const CountryCard = ({ country = "Japan", onClose }: CountryCardProps) => {
-  const { getLegalData, getQualityData, isLoading } = useCountryData();
+  const { getLegalData, getQualityData, getWorkData, isLoading } = useCountryData();
   const [legalData, setLegalData] = useState<LegalData | null>(null);
   const [qualityData, setQualityData] = useState<QualityData | null>(null);
+  const [workData, setWorkData] = useState<WorkData | null>(null);
+  const [activeTab, setActiveTab] = useState('living');
   const [selectedCity, setSelectedCity] = useState<string | null>(null);
   const cities = cityData[country] || [];
+  const [dataLoaded, setDataLoaded] = useState({
+    legal: false,
+    quality: false,
+    work: false
+  });
 
+  // Load data only when tab is selected
   useEffect(() => {
-    const loadLegalData = async () => {
+    const loadData = async () => {
       try {
-        const data = await getLegalData(country);
-        setLegalData(data);
+        switch (activeTab) {
+          case 'immigration':
+            if (!dataLoaded.legal) {
+              const data = await getLegalData(country);
+              setLegalData(data);
+              setDataLoaded(prev => ({ ...prev, legal: true }));
+            }
+            break;
+          case 'quality':
+            if (!dataLoaded.quality) {
+              const data = await getQualityData(country);
+              setQualityData(data);
+              setDataLoaded(prev => ({ ...prev, quality: true }));
+            }
+            break;
+          case 'work':
+            if (!dataLoaded.work) {
+              const data = await getWorkData(country);
+              setWorkData(data);
+              setDataLoaded(prev => ({ ...prev, work: true }));
+            }
+            break;
+        }
       } catch (error) {
-        console.error('Failed to load legal data:', error);
+        console.error(`Failed to load ${activeTab} data:`, error);
       }
     };
 
-    loadLegalData();
-  }, [country, getLegalData]);
+    loadData();
+  }, [activeTab, country, getLegalData, getQualityData, getWorkData, dataLoaded]);
 
+  // Reset loaded state when country changes
   useEffect(() => {
-    const loadQualityData = async () => {
-      try {
-        const data = await getQualityData(country);
-        setQualityData(data);
-      } catch (error) {
-        console.error('Failed to load quality data:', error);
-      }
-    };
-
-    loadQualityData();
-  }, [country, getQualityData]);
+    setDataLoaded({
+      legal: false,
+      quality: false,
+      work: false
+    });
+  }, [country]);
 
   const renderCityList = () => {
     const capital = cities.find(city => city.isCapital);
@@ -127,7 +152,6 @@ const CountryCard = ({ country = "Japan", onClose }: CountryCardProps) => {
         {capital && (
           <div>
             <div>
-
               <h3 className="text-sm font-semibold text-gray-500 mb-3">Capital City</h3>
             </div>
             <div
@@ -277,7 +301,7 @@ const CountryCard = ({ country = "Japan", onClose }: CountryCardProps) => {
       </div>
 
       {/* Tabs */}
-      <Tabs defaultValue="living" className="flex-1 flex flex-col min-h-0">
+      <Tabs defaultValue="living" className="flex-1 flex flex-col min-h-0" onValueChange={setActiveTab}>
         <TabsList className="grid w-full grid-cols-5 bg-gray-50 h-auto flex-shrink-0">
           <TabsTrigger value="living" className="flex flex-col items-center p-2">
             <Building2 size={16} />
@@ -428,19 +452,100 @@ const CountryCard = ({ country = "Japan", onClose }: CountryCardProps) => {
 
           <TabsContent value="work" className="h-full data-[state=active]:flex flex-col">
             <ScrollArea className="flex-1">
-              <div className="space-y-4 px-4 py-2">
-                <div className="space-y-2">
-                  <h3 className="font-semibold">Job Market</h3>
-                  <p className="text-sm text-gray-600">Strong demand in tech and finance</p>
-                </div>
-                <div className="space-y-2">
-                  <h3 className="font-semibold">Average Salary</h3>
-                  <p className="text-sm text-gray-600">$45,000 - $75,000 USD/year</p>
-                </div>
-                <div className="space-y-2">
-                  <h3 className="font-semibold">Remote Work</h3>
-                  <p className="text-sm text-gray-600">Digital nomad visa available</p>
-                </div>
+              <div className="space-y-6 px-4 py-2">
+                {isLoading ? (
+                  <div className="flex items-center justify-center h-full">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900" />
+                  </div>
+                ) : workData ? (
+                  <>
+                    <div className="space-y-4">
+                      <h3 className="font-semibold text-lg">Job Market</h3>
+                      <div className="space-y-2">
+                        <p className="text-sm text-gray-600">{workData.jobMarket.overview}</p>
+                        <div className="mt-2">
+                          <h4 className="font-medium">In-Demand Sectors</h4>
+                          <div className="flex flex-wrap gap-2 mt-1">
+                            {workData.jobMarket.inDemandSectors.map((sector, index) => (
+                              <span key={index} className="text-sm bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
+                                {sector}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                        <div className="mt-2">
+                          <h4 className="font-medium">Average Salaries</h4>
+                          <p className="text-sm text-gray-600">{workData.jobMarket.averageSalaries}</p>
+                        </div>
+                        <div className="mt-2">
+                          <h4 className="font-medium">Unemployment</h4>
+                          <p className="text-sm text-gray-600">{workData.jobMarket.unemployment}</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="space-y-4">
+                      <h3 className="font-semibold text-lg">Business Environment</h3>
+                      <div className="space-y-2">
+                        <p className="text-sm text-gray-600">{workData.businessEnvironment.startupScene}</p>
+                        <div className="mt-2">
+                          <h4 className="font-medium">Major Employers</h4>
+                          <ul className="list-disc list-inside text-sm text-gray-600">
+                            {workData.businessEnvironment.majorEmployers.map((employer, index) => (
+                              <li key={index}>{employer}</li>
+                            ))}
+                          </ul>
+                        </div>
+                        <div className="mt-2">
+                          <h4 className="font-medium">Regulations</h4>
+                          <p className="text-sm text-gray-600">{workData.businessEnvironment.regulations}</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="space-y-4">
+                      <h3 className="font-semibold text-lg">Work Culture</h3>
+                      <div className="space-y-2">
+                        <p className="text-sm text-gray-600">{workData.workCulture.workLifeBalance}</p>
+                        <div className="mt-2">
+                          <h4 className="font-medium">Office Hours</h4>
+                          <p className="text-sm text-gray-600">{workData.workCulture.officeHours}</p>
+                        </div>
+                        <div className="mt-2">
+                          <h4 className="font-medium">Common Practices</h4>
+                          <ul className="list-disc list-inside text-sm text-gray-600">
+                            {workData.workCulture.practices.map((practice, index) => (
+                              <li key={index}>{practice}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="space-y-4">
+                      <h3 className="font-semibold text-lg">Foreign Workers</h3>
+                      <div className="space-y-2">
+                        <p className="text-sm text-gray-600">{workData.foreignWorkers.opportunities}</p>
+                        <div className="mt-2">
+                          <h4 className="font-medium">Work Permits</h4>
+                          <p className="text-sm text-gray-600">{workData.foreignWorkers.workPermits}</p>
+                        </div>
+                        <div className="mt-2">
+                          <h4 className="font-medium">Common Challenges</h4>
+                          <ul className="list-disc list-inside text-sm text-gray-600">
+                            {workData.foreignWorkers.challenges.map((challenge, index) => (
+                              <li key={index}>{challenge}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <div className="text-center text-gray-500">
+                    Failed to load work information
+                  </div>
+                )}
               </div>
             </ScrollArea>
           </TabsContent>
