@@ -16,13 +16,14 @@ import CountryCard from '@/app/components/CountryCard';
 
 interface MapProps {
   isChatVisible: boolean;
+  onCountrySelect: (country: string | null) => void;
+  selectedCountry: string | null;
 }
 
-const Map = forwardRef(({ isChatVisible }: MapProps, ref) => {
+const Map = forwardRef(({ isChatVisible, onCountrySelect, selectedCountry }: MapProps, ref) => {
   const mapRef = useRef<mapboxgl.Map | null>(null);
   const markerRef = useRef<mapboxgl.Marker | null>(null);
   const geocoderRef = useRef<MapboxGeocoder | null>(null);
-  const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
   const [selectedCity, setSelectedCity] = useState<string | null>(null);
   const user = useUser();
 
@@ -64,11 +65,12 @@ const Map = forwardRef(({ isChatVisible }: MapProps, ref) => {
     searchGeocoder.on('result', (event) => {
       const result = event.result;
       if (result.place_type[0] === 'country') {
-        setSelectedCountry(result.text);
+        onCountrySelect(result.text);
         setSelectedCity(null);
       } else if (result.place_type[0] === 'place') {
         setSelectedCity(result.text);
-        setSelectedCountry(result.context?.find((c: any) => c.id.startsWith('country'))?.text || null);
+        const country = result.context?.find((c: any) => c.id.startsWith('country'))?.text;
+        if (country) onCountrySelect(country);
       }
 
       // Update or create marker
@@ -124,7 +126,7 @@ const Map = forwardRef(({ isChatVisible }: MapProps, ref) => {
 
           if (data.features && data.features.length > 0) {
             const country = data.features[0];
-            setSelectedCountry(country.text);
+            onCountrySelect(country.text);
 
             // Update marker
             if (markerRef.current) {
@@ -209,7 +211,7 @@ const Map = forwardRef(({ isChatVisible }: MapProps, ref) => {
 
   useImperativeHandle(ref, () => ({
     focusOnCountry: (countryName: string) => {
-      setSelectedCountry(countryName);
+      onCountrySelect(countryName);
 
       const map = mapRef.current;
       if (map) {
@@ -263,50 +265,18 @@ const Map = forwardRef(({ isChatVisible }: MapProps, ref) => {
 
   return (
     <div className="relative h-full w-full overflow-hidden bg-black">
-      <div
-        id="map"
-        className={`absolute transition-all duration-300 ease-in-out ${isChatVisible && selectedCountry
-          ? 'inset-x-0 top-0 h-1/2'
-          : 'inset-0'
-          }`}
-      />
+      <div id="map" className="absolute inset-0" />
 
-      {!isChatVisible ? (
-        // Floating card layout when maximized
-        <div className="flex flex-col absolute w-[350px] top-4 right-4 z-10 gap-4 max-h-[calc(100vh-2rem)]">
-          <div className="flex items-center gap-2 bg-white p-2 rounded-lg">
-            <div className="flex items-center gap-2 w-full relative">
-              <div id="location-search" className="w-full h-10 z-20 py-1" />
-              <Globe className="h-5 w-5 absolute left-2 text-gray-500 pointer-events-none z-30 top-1/2 -translate-y-1/2" />
-              <Navigation className="h-5 w-5 absolute right-2 text-gray-500 pointer-events-none z-30 top-1/2 -translate-y-1/2" />
-            </div>
+      {/* Search bar only */}
+      <div className="absolute top-4 right-4 z-10">
+        <div className="flex items-center gap-2 bg-white p-2 rounded-lg">
+          <div className="flex items-center gap-2 w-full relative">
+            <div id="location-search" className="w-[300px] h-10 z-20 py-1" />
+            <Globe className="h-5 w-5 absolute left-2 text-gray-500 pointer-events-none z-30 top-1/2 -translate-y-1/2" />
+            <Navigation className="h-5 w-5 absolute right-2 text-gray-500 pointer-events-none z-30 top-1/2 -translate-y-1/2" />
           </div>
-          {selectedCountry && (
-            <div className="z-10 h-[600px] overflow-hidden">
-              <CountryCard country={selectedCountry} onClose={() => setSelectedCountry(null)} />
-            </div>
-          )}
         </div>
-      ) : (
-        // Bottom layout when minimized
-        <>
-          <div className="absolute top-4 right-4 z-10 px-4">
-            <div className="flex items-center gap-2 bg-white p-2 rounded-lg">
-              <div className="flex items-center gap-2 w-full relative">
-                <div id="location-search" className="w-[300px] h-10 z-20 py-1" />
-                <Globe className="h-5 w-5 absolute left-2 text-gray-500 pointer-events-none z-30 top-1/2 -translate-y-1/2" />
-              </div>
-            </div>
-          </div>
-          {selectedCountry && (
-            <div className="absolute bottom-0 left-0 right-0 h-1/2 bg-white z-10 transition-all duration-300 ease-in-out">
-              <div className="p-4 h-full overflow-y-auto">
-                <CountryCard country={selectedCountry} onClose={() => setSelectedCountry(null)} />
-              </div>
-            </div>
-          )}
-        </>
-      )}
+      </div>
     </div>
   );
 });

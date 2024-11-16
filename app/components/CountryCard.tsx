@@ -264,7 +264,7 @@ const CountryCard = ({ country = "Japan", onClose }: CountryCardProps) => {
   };
 
   return (
-    <div className="bg-white rounded-lg flex flex-col h-full">
+    <div className="h-full overflow-auto">
       {/* Header */}
       <div className="flex justify-between items-center p-4 flex-shrink-0">
         <h1 className="text-2xl font-semibold">{country}</h1>
