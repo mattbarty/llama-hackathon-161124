@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Plane, Navigation } from 'lucide-react';
 import { UserProfile } from "./components/UserProfile";
+import { useUser } from './contexts/UserContext';
 
 type Coordinates = {
   lat: number | null;
@@ -33,6 +34,7 @@ export default function Home() {
     lng: null,
     name: 'Not selected'
   });
+  const user = useUser();
 
   const createAnimation = () => {
     if (!mapRef.current) return;
@@ -189,11 +191,33 @@ export default function Home() {
       container: 'map',
       style: 'mapbox://styles/mapbox/dark-v11',
       center: [0, 0],
-      zoom: 3,
+      zoom: 2,
       projection: 'globe'
     });
 
     mapRef.current = map;
+
+    const centerOnUserLocation = async () => {
+      try {
+        const response = await fetch(
+          `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(user.currentLocation)}.json?access_token=${mapboxgl.accessToken}`
+        );
+        const data = await response.json();
+
+        if (data.features && data.features.length > 0) {
+          const [lng, lat] = data.features[0].center;
+          map.flyTo({
+            center: [lng, lat],
+            zoom: 2, // Maintain the zoom level
+            speed: 0.5, // Adjust animation speed (0.2 is very slow, 1.2 is very fast)
+            curve: 1, // Change this value to adjust the animation curve
+            essential: true // This animation is considered essential for the map's functionality
+          });
+        }
+      } catch (error) {
+        console.error('Error centering on user location:', error);
+      }
+    };
 
     const startGeocoder = new MapboxGeocoder({
       accessToken: mapboxgl.accessToken,
@@ -238,18 +262,12 @@ export default function Home() {
       document.getElementById('start-geocoder')?.appendChild(startGeocoder.onAdd(map));
       document.getElementById('end-geocoder')?.appendChild(endGeocoder.onAdd(map));
 
-      // Optional: Smooth transition to center
-      map.flyTo({
-        center: [0, 0],
-        zoom: 1.5,
-        speed: 0.8,
-        curve: 1,
-        essential: true
-      });
+      // Center on user location after map loads
+      centerOnUserLocation();
     });
 
     return () => map.remove();
-  }, []);
+  }, [user.currentLocation]);
 
   const isReadyToAnimate = startCoords.lat && startCoords.lng && endCoords.lat && endCoords.lng;
 
