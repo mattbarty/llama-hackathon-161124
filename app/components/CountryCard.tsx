@@ -233,8 +233,8 @@ const CountryCard = ({ country = "Japan", onClose }: CountryCardProps) => {
   };
 
   return (
-    <div className="bg-white rounded-lg flex flex-col gap-4 p-4 h-full overflow-hidden">
-      <div className="flex justify-between items-center">
+    <div className="bg-white rounded-lg flex flex-col h-full">
+      <div className="flex justify-between items-center p-4">
         <h1 className="text-2xl font-semibold">{country}</h1>
         <button
           onClick={onClose}
@@ -243,7 +243,7 @@ const CountryCard = ({ country = "Japan", onClose }: CountryCardProps) => {
           <X size={20} className="text-gray-500" />
         </button>
       </div>
-      <Tabs defaultValue="living" className="w-full">
+      <Tabs defaultValue="living" className="flex-1 flex flex-col">
         <TabsList className="grid w-full grid-cols-5 bg-gray-50 h-auto">
           <TabsTrigger value="living" className="flex flex-col items-center p-2">
             <Building2 size={16} />
@@ -268,7 +268,7 @@ const CountryCard = ({ country = "Japan", onClose }: CountryCardProps) => {
         </TabsList>
 
         <TabsContent value="living">
-          <ScrollArea className="h-full pr-4">
+          <ScrollArea className="h-[500px]">
             <div className="space-y-4 px-4 py-2">
               {selectedCity ? renderCityDetail() : renderCityList()}
             </div>
@@ -276,7 +276,7 @@ const CountryCard = ({ country = "Japan", onClose }: CountryCardProps) => {
         </TabsContent>
 
         <TabsContent value="immigration">
-          <ScrollArea className="h-full pr-4">
+          <ScrollArea className="h-[500px]">
             <div className="space-y-4 px-4 py-2">
               <div className="space-y-2">
                 <h3 className="font-semibold">Visa Requirements</h3>
@@ -299,7 +299,7 @@ const CountryCard = ({ country = "Japan", onClose }: CountryCardProps) => {
         </TabsContent>
 
         <TabsContent value="quality">
-          <ScrollArea className="h-[600px] pr-4">
+          <ScrollArea className="h-[500px]">
             <div className="space-y-4 px-4 py-2">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
@@ -324,7 +324,7 @@ const CountryCard = ({ country = "Japan", onClose }: CountryCardProps) => {
         </TabsContent>
 
         <TabsContent value="work">
-          <ScrollArea className="h-[600px] pr-4">
+          <ScrollArea className="h-[500px]">
             <div className="space-y-4 px-4 py-2">
               <div className="space-y-2">
                 <h3 className="font-semibold">Job Market</h3>
@@ -343,7 +343,7 @@ const CountryCard = ({ country = "Japan", onClose }: CountryCardProps) => {
         </TabsContent>
 
         <TabsContent value="culture">
-          <ScrollArea className="h-[600px] pr-4">
+          <ScrollArea className="h-[500px]">
             <div className="space-y-4 px-4 py-2">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">

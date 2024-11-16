@@ -225,7 +225,7 @@ export default function Map({ isChatVisible }: MapProps) {
 
       {!isChatVisible ? (
         // Floating card layout when maximized
-        <div className="flex flex-col absolute w-[400px] top-4 right-4 z-10 gap-4 h-[400px]">
+        <div className="flex flex-col absolute w-[350px] top-4 right-4 z-10 gap-4 max-h-[calc(100vh-2rem)]">
           <div className="flex items-center gap-2 bg-white p-2 rounded-lg">
             <div className="flex items-center gap-2 w-full relative">
               <div id="location-search" className="w-full h-10 z-20 py-1" />
