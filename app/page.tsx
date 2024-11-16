@@ -13,20 +13,18 @@ export default function Home() {
 
   return (
     <main className="flex h-screen w-screen overflow-hidden">
-      {/* Chat Section */}
       <div
-        className={`h-full transition-all duration-300 ease-in-out ${isChatVisible ? 'w-1/2' : 'w-0'
+        className={`h-full transition-all duration-300 ease-in-out ${isChatVisible ? 'w-2/3' : 'w-0'
           }`}
       >
         {isChatVisible && <ChatBox />}
       </div>
 
-      {/* Map Section */}
       <div
-        className={`h-full transition-all duration-300 ease-in-out relative ${isChatVisible ? 'w-1/2' : 'w-full'
+        className={`h-full transition-all duration-300 ease-in-out relative ${isChatVisible ? 'w-1/3' : 'w-full'
           }`}
       >
-        <Map />
+        <Map isChatVisible={isChatVisible} />
         <Button
           variant="secondary"
           size="icon"

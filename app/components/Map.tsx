@@ -14,7 +14,11 @@ import { UserProfile } from "./UserProfile";
 import { useUser } from '@/app/contexts/UserContext';
 import CountryCard from '@/app/components/CountryCard';
 
-export default function Map() {
+interface MapProps {
+  isChatVisible: boolean;
+}
+
+export default function Map({ isChatVisible }: MapProps) {
   const mapRef = useRef<mapboxgl.Map | null>(null);
   const markerRef = useRef<mapboxgl.Marker | null>(null);
   const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
@@ -211,26 +215,51 @@ export default function Map() {
 
   return (
     <div className="relative h-full w-full overflow-hidden">
-      <div id="map" className="absolute inset-0" />
+      <div
+        id="map"
+        className={`absolute transition-all duration-300 ease-in-out ${isChatVisible && selectedCountry
+          ? 'inset-x-0 top-0 h-1/2'
+          : 'inset-0'
+          }`}
+      />
 
-      <div className="flex flex-col absolute w-[90%] max-w-[450px] top-4 right-4 z-10 gap-4">
-        <div className="flex items-center gap-2 bg-white p-2 rounded-lg">
-          <div className="flex items-center gap-2 w-full relative">
-            <div id="location-search" className="w-full h-10 z-20 py-1">
-              {/* MapboxGeocoder will inject its input here */}
+      {!isChatVisible ? (
+        // Floating card layout when maximized
+        <div className="flex flex-col absolute w-[90%] max-w-[450px] top-4 right-4 z-10 gap-4">
+          <div className="flex items-center gap-2 bg-white p-2 rounded-lg">
+            <div className="flex items-center gap-2 w-full relative">
+              <div id="location-search" className="w-full h-10 z-20 py-1" />
+              <Globe className="h-5 w-5 absolute left-2 text-gray-500 pointer-events-none z-30 top-1/2 -translate-y-1/2" />
+              <Navigation className="h-5 w-5 absolute right-2 text-gray-500 pointer-events-none z-30 top-1/2 -translate-y-1/2" />
             </div>
-            <Globe className="h-5 w-5 absolute left-2 text-gray-500 pointer-events-none z-30 top-1/2 -translate-y-1/2" />
-            <Navigation className="h-5 w-5 absolute right-2 text-gray-500 pointer-events-none z-30 top-1/2 -translate-y-1/2" />
           </div>
+          {selectedCountry && (
+            <div className="z-10">
+              <CountryCard country={selectedCountry} onClose={() => setSelectedCountry(null)} />
+            </div>
+          )}
         </div>
-        {/* Country Card - Right Side */}
-        {selectedCountry && (
-          <div className="z-10">
-            <CountryCard country={selectedCountry} onClose={() => setSelectedCountry(null)} />
+      ) : (
+        // Bottom layout when minimized
+        <>
+          <div className="absolute w-full top-4 right-4 z-10 px-4">
+            <div className="flex items-center gap-2 bg-white p-2 rounded-lg">
+              <div className="flex items-center gap-2 w-full relative">
+                <div id="location-search" className="w-full h-10 z-20 py-1" />
+                <Globe className="h-5 w-5 absolute left-2 text-gray-500 pointer-events-none z-30 top-1/2 -translate-y-1/2" />
+                <Navigation className="h-5 w-5 absolute right-2 text-gray-500 pointer-events-none z-30 top-1/2 -translate-y-1/2" />
+              </div>
+            </div>
           </div>
-        )}
-      </div>
-
+          {selectedCountry && (
+            <div className="absolute bottom-0 left-0 right-0 h-1/2 bg-white z-10 transition-all duration-300 ease-in-out">
+              <div className="p-4 h-full overflow-y-auto">
+                <CountryCard country={selectedCountry} onClose={() => setSelectedCountry(null)} />
+              </div>
+            </div>
+          )}
+        </>
+      )}
     </div>
   );
 }
