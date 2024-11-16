@@ -6,6 +6,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Send } from 'lucide-react';
+import InteractiveMessage from './InteractiveMessage';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -67,27 +68,18 @@ export default function ChatBox() {
       {/* Messages Container */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {messages.map((message, index) => (
-          <div
+          <InteractiveMessage
             key={index}
-            className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'
-              }`}
-          >
-            <div
-              className={`max-w-[80%] rounded-lg p-3 ${message.role === 'user'
-                  ? 'bg-blue-500 text-white'
-                  : 'bg-gray-100 text-gray-900'
-                }`}
-            >
-              {message.content}
-            </div>
-          </div>
+            role={message.role}
+            content={message.content}
+          />
         ))}
         {isLoading && (
-          <div className="flex justify-start">
-            <div className="bg-gray-100 rounded-lg p-3">
-              <span className="animate-pulse">Thinking...</span>
-            </div>
-          </div>
+          <InteractiveMessage
+            role="assistant"
+            content=""
+            isLoading={true}
+          />
         )}
       </div>
 
