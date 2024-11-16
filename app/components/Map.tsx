@@ -234,7 +234,7 @@ export default function Map({ isChatVisible }: MapProps) {
             </div>
           </div>
           {selectedCountry && (
-            <div className="z-10">
+            <div className="z-10 h-[600px] overflow-hidden">
               <CountryCard country={selectedCountry} onClose={() => setSelectedCountry(null)} />
             </div>
           )}

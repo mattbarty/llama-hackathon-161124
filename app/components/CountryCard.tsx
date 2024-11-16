@@ -91,7 +91,7 @@ const CountryCard = ({ country = "Japan", onClose }: CountryCardProps) => {
     const otherCities = cities.filter(city => !city.isCapital);
 
     return (
-      <div className="space-y-6">
+      <div className="space-y-6 h-full">
         {/* Capital City Card */}
         {capital && (
           <div>
@@ -234,7 +234,8 @@ const CountryCard = ({ country = "Japan", onClose }: CountryCardProps) => {
 
   return (
     <div className="bg-white rounded-lg flex flex-col h-full">
-      <div className="flex justify-between items-center p-4">
+      {/* Header */}
+      <div className="flex justify-between items-center p-4 flex-shrink-0">
         <h1 className="text-2xl font-semibold">{country}</h1>
         <button
           onClick={onClose}
@@ -243,8 +244,10 @@ const CountryCard = ({ country = "Japan", onClose }: CountryCardProps) => {
           <X size={20} className="text-gray-500" />
         </button>
       </div>
-      <Tabs defaultValue="living" className="flex-1 flex flex-col">
-        <TabsList className="grid w-full grid-cols-5 bg-gray-50 h-auto">
+
+      {/* Tabs */}
+      <Tabs defaultValue="living" className="flex-1 flex flex-col min-h-0">
+        <TabsList className="grid w-full grid-cols-5 bg-gray-50 h-auto flex-shrink-0">
           <TabsTrigger value="living" className="flex flex-col items-center p-2">
             <Building2 size={16} />
             <span className="text-xs mt-1">Cities</span>
@@ -267,105 +270,107 @@ const CountryCard = ({ country = "Japan", onClose }: CountryCardProps) => {
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="living">
-          <ScrollArea className="h-[500px]">
-            <div className="space-y-4 px-4 py-2">
-              {selectedCity ? renderCityDetail() : renderCityList()}
-            </div>
-          </ScrollArea>
-        </TabsContent>
+        <div className="flex-1 min-h-0">
+          <TabsContent value="living" className="h-full data-[state=active]:flex flex-col">
+            <ScrollArea className="flex-1">
+              <div className="space-y-4 px-4 py-2">
+                {selectedCity ? renderCityDetail() : renderCityList()}
+              </div>
+            </ScrollArea>
+          </TabsContent>
 
-        <TabsContent value="immigration">
-          <ScrollArea className="h-[500px]">
-            <div className="space-y-4 px-4 py-2">
-              <div className="space-y-2">
-                <h3 className="font-semibold">Visa Requirements</h3>
-                <p className="text-sm text-gray-600">90-day tourist visa on arrival for most passports</p>
+          <TabsContent value="immigration" className="h-full data-[state=active]:flex flex-col">
+            <ScrollArea className="flex-1">
+              <div className="space-y-4 px-4 py-2">
+                <div className="space-y-2">
+                  <h3 className="font-semibold">Visa Requirements</h3>
+                  <p className="text-sm text-gray-600">90-day tourist visa on arrival for most passports</p>
+                </div>
+                <div className="space-y-2">
+                  <h3 className="font-semibold">Path to Residency</h3>
+                  <p className="text-sm text-gray-600">5 years of continuous residence required</p>
+                </div>
+                <div className="space-y-2">
+                  <h3 className="font-semibold">Required Documents</h3>
+                  <ul className="text-sm text-gray-600 list-disc pl-4">
+                    <li>Valid passport</li>
+                    <li>Proof of income</li>
+                    <li>Health insurance</li>
+                  </ul>
+                </div>
               </div>
-              <div className="space-y-2">
-                <h3 className="font-semibold">Path to Residency</h3>
-                <p className="text-sm text-gray-600">5 years of continuous residence required</p>
-              </div>
-              <div className="space-y-2">
-                <h3 className="font-semibold">Required Documents</h3>
-                <ul className="text-sm text-gray-600 list-disc pl-4">
-                  <li>Valid passport</li>
-                  <li>Proof of income</li>
-                  <li>Health insurance</li>
-                </ul>
-              </div>
-            </div>
-          </ScrollArea>
-        </TabsContent>
+            </ScrollArea>
+          </TabsContent>
 
-        <TabsContent value="quality">
-          <ScrollArea className="h-[500px]">
-            <div className="space-y-4 px-4 py-2">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <h3 className="font-semibold">Healthcare</h3>
-                  <p className="text-sm text-gray-600">Universal healthcare system</p>
-                </div>
-                <div className="space-y-2">
-                  <h3 className="font-semibold">Safety Index</h3>
-                  <p className="text-sm text-gray-600">Very High (Top 10%)</p>
-                </div>
-                <div className="space-y-2">
-                  <h3 className="font-semibold">Air Quality</h3>
-                  <p className="text-sm text-gray-600">Good (AQI: 35)</p>
-                </div>
-                <div className="space-y-2">
-                  <h3 className="font-semibold">Education</h3>
-                  <p className="text-sm text-gray-600">Top-tier public education</p>
+          <TabsContent value="quality" className="h-full data-[state=active]:flex flex-col">
+            <ScrollArea className="flex-1">
+              <div className="space-y-4 px-4 py-2">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <h3 className="font-semibold">Healthcare</h3>
+                    <p className="text-sm text-gray-600">Universal healthcare system</p>
+                  </div>
+                  <div className="space-y-2">
+                    <h3 className="font-semibold">Safety Index</h3>
+                    <p className="text-sm text-gray-600">Very High (Top 10%)</p>
+                  </div>
+                  <div className="space-y-2">
+                    <h3 className="font-semibold">Air Quality</h3>
+                    <p className="text-sm text-gray-600">Good (AQI: 35)</p>
+                  </div>
+                  <div className="space-y-2">
+                    <h3 className="font-semibold">Education</h3>
+                    <p className="text-sm text-gray-600">Top-tier public education</p>
+                  </div>
                 </div>
               </div>
-            </div>
-          </ScrollArea>
-        </TabsContent>
+            </ScrollArea>
+          </TabsContent>
 
-        <TabsContent value="work">
-          <ScrollArea className="h-[500px]">
-            <div className="space-y-4 px-4 py-2">
-              <div className="space-y-2">
-                <h3 className="font-semibold">Job Market</h3>
-                <p className="text-sm text-gray-600">Strong demand in tech and finance</p>
+          <TabsContent value="work" className="h-full data-[state=active]:flex flex-col">
+            <ScrollArea className="flex-1">
+              <div className="space-y-4 px-4 py-2">
+                <div className="space-y-2">
+                  <h3 className="font-semibold">Job Market</h3>
+                  <p className="text-sm text-gray-600">Strong demand in tech and finance</p>
+                </div>
+                <div className="space-y-2">
+                  <h3 className="font-semibold">Average Salary</h3>
+                  <p className="text-sm text-gray-600">$45,000 - $75,000 USD/year</p>
+                </div>
+                <div className="space-y-2">
+                  <h3 className="font-semibold">Remote Work</h3>
+                  <p className="text-sm text-gray-600">Digital nomad visa available</p>
+                </div>
               </div>
-              <div className="space-y-2">
-                <h3 className="font-semibold">Average Salary</h3>
-                <p className="text-sm text-gray-600">$45,000 - $75,000 USD/year</p>
-              </div>
-              <div className="space-y-2">
-                <h3 className="font-semibold">Remote Work</h3>
-                <p className="text-sm text-gray-600">Digital nomad visa available</p>
-              </div>
-            </div>
-          </ScrollArea>
-        </TabsContent>
+            </ScrollArea>
+          </TabsContent>
 
-        <TabsContent value="culture">
-          <ScrollArea className="h-[500px]">
-            <div className="space-y-4 px-4 py-2">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <h3 className="font-semibold">Languages</h3>
-                  <p className="text-sm text-gray-600">Japanese (English widely used)</p>
+          <TabsContent value="culture" className="h-full data-[state=active]:flex flex-col">
+            <ScrollArea className="flex-1">
+              <div className="space-y-4 px-4 py-2">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <h3 className="font-semibold">Languages</h3>
+                    <p className="text-sm text-gray-600">Japanese (English widely used)</p>
+                  </div>
+                  <div className="space-y-2">
+                    <h3 className="font-semibold">Expat Community</h3>
+                    <p className="text-sm text-gray-600">Large (2.9M foreigners)</p>
+                  </div>
                 </div>
                 <div className="space-y-2">
-                  <h3 className="font-semibold">Expat Community</h3>
-                  <p className="text-sm text-gray-600">Large (2.9M foreigners)</p>
+                  <h3 className="font-semibold">Cultural Notes</h3>
+                  <ul className="text-sm text-gray-600 list-disc pl-4">
+                    <li>Punctuality is highly valued</li>
+                    <li>Formal business culture</li>
+                    <li>Remove shoes indoors</li>
+                  </ul>
                 </div>
               </div>
-              <div className="space-y-2">
-                <h3 className="font-semibold">Cultural Notes</h3>
-                <ul className="text-sm text-gray-600 list-disc pl-4">
-                  <li>Punctuality is highly valued</li>
-                  <li>Formal business culture</li>
-                  <li>Remove shoes indoors</li>
-                </ul>
-              </div>
-            </div>
-          </ScrollArea>
-        </TabsContent>
+            </ScrollArea>
+          </TabsContent>
+        </div>
       </Tabs>
     </div>
   );
