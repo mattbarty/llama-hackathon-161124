@@ -8,13 +8,37 @@ export interface LegalData {
   requiredDocuments: string[];
 }
 
+export interface QualityData {
+  healthcare: {
+    system: string;
+    quality: string;
+    cost: string;
+  };
+  safety: {
+    index: string;
+    details: string;
+  };
+  environment: {
+    airQuality: string;
+    climate: string;
+    sustainability: string;
+  };
+  education: {
+    system: string;
+    universities: string;
+    internationalSchools: string;
+  };
+}
+
 interface CountryData {
   legal?: LegalData;
+  quality?: QualityData;
 }
 
 interface CountryDataContextType {
   countryData: Record<string, CountryData>;
   getLegalData: (country: string) => Promise<LegalData>;
+  getQualityData: (country: string) => Promise<QualityData>;
   isLoading: boolean;
 }
 
@@ -25,7 +49,6 @@ export function CountryDataProvider({ children }: { children: ReactNode; }) {
   const [isLoading, setIsLoading] = useState(false);
 
   const getLegalData = async (country: string): Promise<LegalData> => {
-    // Check if we already have the data
     if (countryData[country]?.legal) {
       return countryData[country].legal!;
     }
@@ -45,7 +68,6 @@ export function CountryDataProvider({ children }: { children: ReactNode; }) {
 
       const data = await response.json();
 
-      // Update the context with new data
       setCountryData(prev => ({
         ...prev,
         [country]: {
@@ -63,8 +85,50 @@ export function CountryDataProvider({ children }: { children: ReactNode; }) {
     }
   };
 
+  const getQualityData = async (country: string): Promise<QualityData> => {
+    if (countryData[country]?.quality) {
+      return countryData[country].quality!;
+    }
+
+    setIsLoading(true);
+    try {
+      const response = await fetch('/api/generateCountryData', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          country,
+          section: 'quality'
+        }),
+      });
+
+      const data = await response.json();
+
+      setCountryData(prev => ({
+        ...prev,
+        [country]: {
+          ...prev[country],
+          quality: data
+        }
+      }));
+
+      return data;
+    } catch (error) {
+      console.error('Failed to generate quality data:', error);
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
-    <CountryDataContext.Provider value={{ countryData, getLegalData, isLoading }}>
+    <CountryDataContext.Provider value={{
+      countryData,
+      getLegalData,
+      getQualityData,
+      isLoading
+    }}>
       {children}
     </CountryDataContext.Provider>
   );

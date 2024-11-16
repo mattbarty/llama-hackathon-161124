@@ -4,7 +4,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Globe2, Building2, Heart, Briefcase, Users, Home, BookOpen, Scale, ChevronLeft, X, Star } from 'lucide-react';
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { useCountryData } from '@/app/contexts/CountryDataContext';
+import { QualityData, useCountryData } from '@/app/contexts/CountryDataContext';
 import { LegalData } from '@/app/contexts/CountryDataContext';
 
 interface CountryCardProps {
@@ -85,8 +85,9 @@ const cityData: Record<string, CityInfo[]> = {
 };
 
 const CountryCard = ({ country = "Japan", onClose }: CountryCardProps) => {
-  const { getLegalData, isLoading } = useCountryData();
+  const { getLegalData, getQualityData, isLoading } = useCountryData();
   const [legalData, setLegalData] = useState<LegalData | null>(null);
+  const [qualityData, setQualityData] = useState<QualityData | null>(null);
   const [selectedCity, setSelectedCity] = useState<string | null>(null);
   const cities = cityData[country] || [];
 
@@ -102,6 +103,19 @@ const CountryCard = ({ country = "Japan", onClose }: CountryCardProps) => {
 
     loadLegalData();
   }, [country, getLegalData]);
+
+  useEffect(() => {
+    const loadQualityData = async () => {
+      try {
+        const data = await getQualityData(country);
+        setQualityData(data);
+      } catch (error) {
+        console.error('Failed to load quality data:', error);
+      }
+    };
+
+    loadQualityData();
+  }, [country, getQualityData]);
 
   const renderCityList = () => {
     const capital = cities.find(city => city.isCapital);
@@ -329,25 +343,85 @@ const CountryCard = ({ country = "Japan", onClose }: CountryCardProps) => {
 
           <TabsContent value="quality" className="h-full data-[state=active]:flex flex-col">
             <ScrollArea className="flex-1">
-              <div className="space-y-4 px-4 py-2">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <h3 className="font-semibold">Healthcare</h3>
-                    <p className="text-sm text-gray-600">Universal healthcare system</p>
+              <div className="space-y-6 px-4 py-2">
+                {isLoading ? (
+                  <div className="flex items-center justify-center h-full">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900" />
                   </div>
-                  <div className="space-y-2">
-                    <h3 className="font-semibold">Safety Index</h3>
-                    <p className="text-sm text-gray-600">Very High (Top 10%)</p>
+                ) : qualityData ? (
+                  <>
+                    <div className="space-y-4">
+                      <h3 className="font-semibold text-lg">Healthcare</h3>
+                      <div className="grid gap-4">
+                        <div className="space-y-2">
+                          <h4 className="font-medium">System</h4>
+                          <p className="text-sm text-gray-600">{qualityData.healthcare.system}</p>
+                        </div>
+                        <div className="space-y-2">
+                          <h4 className="font-medium">Quality</h4>
+                          <p className="text-sm text-gray-600">{qualityData.healthcare.quality}</p>
+                        </div>
+                        <div className="space-y-2">
+                          <h4 className="font-medium">Cost</h4>
+                          <p className="text-sm text-gray-600">{qualityData.healthcare.cost}</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="space-y-4">
+                      <h3 className="font-semibold text-lg">Safety</h3>
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2">
+                          <h4 className="font-medium">Safety Index</h4>
+                          <span className="text-sm bg-green-100 text-green-800 px-2 py-1 rounded-full">
+                            {qualityData.safety.index}
+                          </span>
+                        </div>
+                        <p className="text-sm text-gray-600">{qualityData.safety.details}</p>
+                      </div>
+                    </div>
+
+                    <div className="space-y-4">
+                      <h3 className="font-semibold text-lg">Environment</h3>
+                      <div className="grid gap-4">
+                        <div className="space-y-2">
+                          <h4 className="font-medium">Air Quality</h4>
+                          <p className="text-sm text-gray-600">{qualityData.environment.airQuality}</p>
+                        </div>
+                        <div className="space-y-2">
+                          <h4 className="font-medium">Climate</h4>
+                          <p className="text-sm text-gray-600">{qualityData.environment.climate}</p>
+                        </div>
+                        <div className="space-y-2">
+                          <h4 className="font-medium">Sustainability</h4>
+                          <p className="text-sm text-gray-600">{qualityData.environment.sustainability}</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="space-y-4">
+                      <h3 className="font-semibold text-lg">Education</h3>
+                      <div className="grid gap-4">
+                        <div className="space-y-2">
+                          <h4 className="font-medium">Education System</h4>
+                          <p className="text-sm text-gray-600">{qualityData.education.system}</p>
+                        </div>
+                        <div className="space-y-2">
+                          <h4 className="font-medium">Universities</h4>
+                          <p className="text-sm text-gray-600">{qualityData.education.universities}</p>
+                        </div>
+                        <div className="space-y-2">
+                          <h4 className="font-medium">International Schools</h4>
+                          <p className="text-sm text-gray-600">{qualityData.education.internationalSchools}</p>
+                        </div>
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <div className="text-center text-gray-500">
+                    Failed to load quality of life information
                   </div>
-                  <div className="space-y-2">
-                    <h3 className="font-semibold">Air Quality</h3>
-                    <p className="text-sm text-gray-600">Good (AQI: 35)</p>
-                  </div>
-                  <div className="space-y-2">
-                    <h3 className="font-semibold">Education</h3>
-                    <p className="text-sm text-gray-600">Top-tier public education</p>
-                  </div>
-                </div>
+                )}
               </div>
             </ScrollArea>
           </TabsContent>
