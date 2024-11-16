@@ -21,10 +21,12 @@ export default function Home() {
       </div>
 
       <div
-        className={`h-full transition-all duration-300 ease-in-out relative ${isChatVisible ? 'w-1/3' : 'w-full'
+        className={`h-full transition-all duration-300 ease-in-out p-4 rounded-lg overflow-hidden bg-pink-500 relative ${isChatVisible ? 'w-1/3' : 'w-full'
           }`}
       >
-        <Map isChatVisible={isChatVisible} />
+        <div className="h-full w-full rounded-lg overflow-hidden">
+          <Map isChatVisible={isChatVisible} />
+        </div>
         <Button
           variant="secondary"
           size="icon"
