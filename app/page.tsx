@@ -1,29 +1,29 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import mapboxgl from 'mapbox-gl';
 import * as turf from '@turf/turf';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import type { Feature, FeatureCollection, LineString, Point, Position } from 'geojson';
 
+type Coordinates = {
+  lat: number;
+  lng: number;
+};
+
 export default function Home() {
   const runningRef = useRef(false);
+  const mapRef = useRef<mapboxgl.Map | null>(null);
+  const [startCoords, setStartCoords] = useState<Coordinates>({ lat: 37.776, lng: -122.414 });
+  const [endCoords, setEndCoords] = useState<Coordinates>({ lat: 38.913, lng: -77.032 });
 
-  useEffect(() => {
-    mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN || '';
+  const createAnimation = () => {
+    if (!mapRef.current) return;
+    const map = mapRef.current;
 
-    const map = new mapboxgl.Map({
-      container: 'map',
-      style: 'mapbox://styles/mapbox/dark-v11',
-      center: [-96, 37.8],
-      zoom: 3,
-      pitch: 40,
-    });
-
-    // San Francisco
-    const origin: Position = [-122.414, 37.776];
-    // Washington DC
-    const destination: Position = [-77.032, 38.913];
+    // Convert to Position type
+    const origin: Position = [startCoords.lng, startCoords.lat];
+    const destination: Position = [endCoords.lng, endCoords.lat];
 
     const route: FeatureCollection<LineString> = {
       type: 'FeatureCollection',
@@ -66,110 +66,113 @@ export default function Home() {
     routeFeature.geometry.coordinates = arc;
     let counter = 0;
 
-    map.on('load', () => {
-      // Create bounds using LngLat objects
-      const bounds = new mapboxgl.LngLatBounds(
-        new mapboxgl.LngLat(origin[0], origin[1]),
-        new mapboxgl.LngLat(destination[0], destination[1])
-      );
+    // Create bounds using LngLatLike format
+    const bounds = new mapboxgl.LngLatBounds(
+      [origin[0], origin[1]],
+      [destination[0], destination[1]]
+    );
 
-      map.fitBounds(bounds, {
-        padding: { top: 50, bottom: 50, left: 50, right: 50 },
-        duration: 0
-      });
+    // Center the map on the route
+    map.fitBounds(bounds, {
+      padding: { top: 50, bottom: 50, left: 50, right: 50 },
+      duration: 1000
+    });
 
-      map.addSource('route', {
-        type: 'geojson',
-        data: route
-      });
+    // Remove existing layers and sources if they exist
+    if (map.getLayer('point')) map.removeLayer('point');
+    if (map.getLayer('route')) map.removeLayer('route');
+    if (map.getSource('point')) map.removeSource('point');
+    if (map.getSource('route')) map.removeSource('route');
 
-      map.addSource('point', {
-        type: 'geojson',
-        data: point
-      });
+    map.addSource('route', {
+      type: 'geojson',
+      data: route
+    });
 
-      map.addLayer({
-        id: 'route',
-        source: 'route',
-        type: 'line',
-        paint: {
-          'line-width': 2,
-          'line-color': '#007cbf'
-        }
-      });
+    map.addSource('point', {
+      type: 'geojson',
+      data: point
+    });
 
-      map.addLayer({
-        id: 'point',
-        source: 'point',
-        type: 'symbol',
-        layout: {
-          'icon-image': 'airport',
-          'icon-size': 1.5,
-          'icon-rotate': ['get', 'bearing'],
-          'icon-rotation-alignment': 'map',
-          'icon-allow-overlap': true,
-          'icon-ignore-placement': true
-        }
-      });
-
-      function animate() {
-        runningRef.current = true;
-        const replayButton = document.getElementById('replay') as HTMLButtonElement;
-        if (replayButton) replayButton.disabled = true;
-
-        const routeCoords = routeFeature.geometry.coordinates;
-        const pointFeature = point.features[0];
-
-        if (!pointFeature) throw new Error('Point feature is undefined');
-
-        const start = routeCoords[counter >= steps ? counter - 1 : counter];
-        const end = routeCoords[counter >= steps ? counter : counter + 1];
-
-        if (!start || !end) {
-          runningRef.current = false;
-          if (replayButton) replayButton.disabled = false;
-          return;
-        }
-
-        pointFeature.geometry.coordinates = routeCoords[counter];
-
-        if (pointFeature.properties) {
-          pointFeature.properties.bearing = turf.bearing(
-            turf.point(start),
-            turf.point(end)
-          );
-        }
-
-        const pointSource = map.getSource('point') as mapboxgl.GeoJSONSource;
-        pointSource.setData(point);
-
-        if (counter < steps) {
-          requestAnimationFrame(animate);
-        }
-
-        counter = counter + 1;
-      }
-
-      // Start the animation
-      animate();
-
-      // Add event listener for replay button
-      const replayButton = document.getElementById('replay');
-      if (replayButton) {
-        replayButton.addEventListener('click', () => {
-          if (!runningRef.current) {
-            const pointFeature = point.features[0];
-            if (!pointFeature) return;
-
-            pointFeature.geometry.coordinates = origin;
-            const pointSource = map.getSource('point') as mapboxgl.GeoJSONSource;
-            pointSource.setData(point);
-            counter = 0;
-            animate();
-          }
-        });
+    map.addLayer({
+      id: 'route',
+      source: 'route',
+      type: 'line',
+      paint: {
+        'line-width': 2,
+        'line-color': '#007cbf'
       }
     });
+
+    map.addLayer({
+      id: 'point',
+      source: 'point',
+      type: 'symbol',
+      layout: {
+        'icon-image': 'airport',
+        'icon-size': 1.5,
+        'icon-rotate': ['get', 'bearing'],
+        'icon-rotation-alignment': 'map',
+        'icon-allow-overlap': true,
+        'icon-ignore-placement': true
+      }
+    });
+
+    function animate() {
+      runningRef.current = true;
+      const replayButton = document.getElementById('replay') as HTMLButtonElement;
+      if (replayButton) replayButton.disabled = true;
+
+      const routeCoords = routeFeature.geometry.coordinates;
+      const pointFeature = point.features[0];
+
+      if (!pointFeature) throw new Error('Point feature is undefined');
+
+      const start = routeCoords[counter >= steps ? counter - 1 : counter];
+      const end = routeCoords[counter >= steps ? counter : counter + 1];
+
+      if (!start || !end) {
+        runningRef.current = false;
+        if (replayButton) replayButton.disabled = false;
+        return;
+      }
+
+      pointFeature.geometry.coordinates = routeCoords[counter];
+
+      if (pointFeature.properties) {
+        pointFeature.properties.bearing = turf.bearing(
+          turf.point(start),
+          turf.point(end)
+        );
+      }
+
+      const pointSource = map.getSource('point') as mapboxgl.GeoJSONSource;
+      pointSource.setData(point);
+
+      if (counter < steps) {
+        requestAnimationFrame(animate);
+      }
+
+      counter = counter + 1;
+    }
+
+    animate();
+  };
+
+  useEffect(() => {
+    mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN || '';
+
+    const map = new mapboxgl.Map({
+      container: 'map',
+      style: 'mapbox://styles/mapbox/dark-v11',
+      center: [-96, 35],
+      zoom: 3.2,
+      pitch: 40,
+    });
+
+    mapRef.current = map;
+
+    map.on('load', createAnimation);
 
     return () => map.remove();
   }, []);
@@ -177,13 +180,59 @@ export default function Home() {
   return (
     <main className="relative h-screen w-screen overflow-hidden">
       <div id="map" className="absolute inset-0" />
-      <div className="absolute top-4 left-4 z-10">
-        <button
-          id="replay"
-          className="px-5 py-2.5 bg-[#3386c0] hover:bg-[#4ea0da] disabled:bg-[#f5f5f5] disabled:text-[#c3c3c3] text-white font-semibold text-sm rounded-md"
-        >
-          Replay
-        </button>
+      <div className="absolute top-4 left-4 z-10 bg-white p-4 rounded-lg shadow-lg">
+        <div className="space-y-4">
+          <div>
+            <h3 className="font-semibold mb-2">Starting Point</h3>
+            <div className="grid grid-cols-2 gap-2">
+              <input
+                type="number"
+                value={startCoords.lat}
+                onChange={(e) => setStartCoords(prev => ({ ...prev, lat: parseFloat(e.target.value) }))}
+                placeholder="Latitude"
+                className="border p-1 rounded"
+              />
+              <input
+                type="number"
+                value={startCoords.lng}
+                onChange={(e) => setStartCoords(prev => ({ ...prev, lng: parseFloat(e.target.value) }))}
+                placeholder="Longitude"
+                className="border p-1 rounded"
+              />
+            </div>
+          </div>
+          <div>
+            <h3 className="font-semibold mb-2">Destination</h3>
+            <div className="grid grid-cols-2 gap-2">
+              <input
+                type="number"
+                value={endCoords.lat}
+                onChange={(e) => setEndCoords(prev => ({ ...prev, lat: parseFloat(e.target.value) }))}
+                placeholder="Latitude"
+                className="border p-1 rounded"
+              />
+              <input
+                type="number"
+                value={endCoords.lng}
+                onChange={(e) => setEndCoords(prev => ({ ...prev, lng: parseFloat(e.target.value) }))}
+                placeholder="Longitude"
+                className="border p-1 rounded"
+              />
+            </div>
+          </div>
+          <button
+            onClick={createAnimation}
+            className="w-full px-4 py-2 bg-[#3386c0] hover:bg-[#4ea0da] text-white font-semibold rounded-md"
+          >
+            Start Animation
+          </button>
+          <button
+            id="replay"
+            className="w-full px-4 py-2 bg-[#3386c0] hover:bg-[#4ea0da] disabled:bg-[#f5f5f5] disabled:text-[#c3c3c3] text-white font-semibold rounded-md"
+          >
+            Replay
+          </button>
+        </div>
       </div>
     </main>
   );
