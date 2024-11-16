@@ -103,7 +103,7 @@ const CountryCard = ({ country = "Japan", onClose }: CountryCardProps) => {
               onClick={() => setSelectedCity(capital.name)}
               className="group relative overflow-hidden rounded-lg border shadow-sm hover:shadow-md transition-all cursor-pointer"
             >
-              <div className="h-20 border-b border-gray-200 relative">
+              <div className="h-full border-b border-gray-200 relative">
                 <div className="relative z-10">
                   <div className="flex items-center gap-1 text-xs font-semibold top-2 right-2 absolute bg-teal-500 px-2 py-1 rounded-full text-white">
                     Capital
@@ -233,7 +233,7 @@ const CountryCard = ({ country = "Japan", onClose }: CountryCardProps) => {
   };
 
   return (
-    <div className="bg-white rounded-lg flex flex-col gap-4 p-4">
+    <div className="bg-white rounded-lg flex flex-col gap-4 p-4 h-full overflow-hidden">
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-semibold">{country}</h1>
         <button
@@ -268,7 +268,7 @@ const CountryCard = ({ country = "Japan", onClose }: CountryCardProps) => {
         </TabsList>
 
         <TabsContent value="living">
-          <ScrollArea className="h-[600px] pr-4">
+          <ScrollArea className="h-full pr-4">
             <div className="space-y-4 px-4 py-2">
               {selectedCity ? renderCityDetail() : renderCityList()}
             </div>
@@ -276,7 +276,7 @@ const CountryCard = ({ country = "Japan", onClose }: CountryCardProps) => {
         </TabsContent>
 
         <TabsContent value="immigration">
-          <ScrollArea className="h-[600px] pr-4">
+          <ScrollArea className="h-full pr-4">
             <div className="space-y-4 px-4 py-2">
               <div className="space-y-2">
                 <h3 className="font-semibold">Visa Requirements</h3>

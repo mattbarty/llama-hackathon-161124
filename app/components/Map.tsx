@@ -214,7 +214,7 @@ export default function Map({ isChatVisible }: MapProps) {
   }, []);
 
   return (
-    <div className="relative h-full w-full overflow-hidden">
+    <div className="relative h-full w-full overflow-hidden bg-black">
       <div
         id="map"
         className={`absolute transition-all duration-300 ease-in-out ${isChatVisible && selectedCountry
@@ -225,7 +225,7 @@ export default function Map({ isChatVisible }: MapProps) {
 
       {!isChatVisible ? (
         // Floating card layout when maximized
-        <div className="flex flex-col absolute w-[90%] max-w-[450px] top-4 right-4 z-10 gap-4">
+        <div className="flex flex-col absolute w-[400px] top-4 right-4 z-10 gap-4 h-[400px]">
           <div className="flex items-center gap-2 bg-white p-2 rounded-lg">
             <div className="flex items-center gap-2 w-full relative">
               <div id="location-search" className="w-full h-10 z-20 py-1" />
@@ -242,12 +242,11 @@ export default function Map({ isChatVisible }: MapProps) {
       ) : (
         // Bottom layout when minimized
         <>
-          <div className="absolute w-full top-4 right-4 z-10 px-4">
+          <div className="absolute top-4 right-4 z-10 px-4">
             <div className="flex items-center gap-2 bg-white p-2 rounded-lg">
               <div className="flex items-center gap-2 w-full relative">
-                <div id="location-search" className="w-full h-10 z-20 py-1" />
+                <div id="location-search" className="w-[300px] h-10 z-20 py-1" />
                 <Globe className="h-5 w-5 absolute left-2 text-gray-500 pointer-events-none z-30 top-1/2 -translate-y-1/2" />
-                <Navigation className="h-5 w-5 absolute right-2 text-gray-500 pointer-events-none z-30 top-1/2 -translate-y-1/2" />
               </div>
             </div>
           </div>
