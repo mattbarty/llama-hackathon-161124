@@ -14,17 +14,18 @@ export default function Home() {
   return (
     <main className="flex h-screen w-screen overflow-hidden">
       <div
-        className={`h-full transition-all duration-300 ease-in-out ${isChatVisible ? 'w-2/3' : 'w-0'
+        className={`h-full transition-all duration-300 ease-in-out p-4 overflow-hidden relative ${isChatVisible ? 'w-2/3' : 'w-0'
           }`}
       >
-        {isChatVisible && <ChatBox />}
+        <div className="h-full w-full rounded-lg overflow-hidden border border-gray-200 shadow-sm">
+          {isChatVisible && <ChatBox />}
+        </div>
       </div>
-
       <div
-        className={`h-full transition-all duration-300 ease-in-out p-4 rounded-lg overflow-hidden bg-pink-500 relative ${isChatVisible ? 'w-1/3' : 'w-full'
+        className={`h-full transition-all duration-300 ease-in-out p-4 rounded-lg overflow-hidden relative ${isChatVisible ? 'w-1/3' : 'w-full'
           }`}
       >
-        <div className="h-full w-full rounded-lg overflow-hidden">
+        <div className="h-full w-full rounded-lg overflow-hidden border border-gray-200 shadow-sm">
           <Map isChatVisible={isChatVisible} />
         </div>
         <Button
