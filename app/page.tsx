@@ -16,6 +16,7 @@ import CountryCard from './components/CountryCard';
 
 export default function Home() {
   const mapRef = useRef<mapboxgl.Map | null>(null);
+  const markerRef = useRef<mapboxgl.Marker | null>(null);
   const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
   const [selectedCity, setSelectedCity] = useState<string | null>(null);
   const user = useUser();
@@ -36,7 +37,7 @@ export default function Home() {
     const searchGeocoder = new MapboxGeocoder({
       accessToken: mapboxgl.accessToken,
       mapboxgl: mapboxgl as any,
-      marker: true,
+      marker: false,
       placeholder: 'Search for a location',
       types: 'country,place',
       limit: 5
@@ -51,6 +52,15 @@ export default function Home() {
       } else if (result.place_type[0] === 'place') {
         setSelectedCity(result.text);
         setSelectedCountry(result.context?.find((c: any) => c.id.startsWith('country'))?.text || null);
+      }
+
+      // Update or create marker
+      if (markerRef.current) {
+        markerRef.current.setLngLat(result.center);
+      } else {
+        markerRef.current = new mapboxgl.Marker()
+          .setLngLat(result.center)
+          .addTo(map);
       }
 
       // Fly to the selected location
@@ -134,17 +144,32 @@ export default function Home() {
           setSelectedCountry(countryName);
           setSelectedCity(null);
 
+          // Update or create marker
+          if (markerRef.current) {
+            markerRef.current.setLngLat(e.lngLat);
+          } else {
+            markerRef.current = new mapboxgl.Marker()
+              .setLngLat(e.lngLat)
+              .addTo(map);
+          }
+
           // Fly to the clicked location
           map.flyTo({
             center: e.lngLat,
-            zoom: 4,
+            zoom: 5,
             essential: true
           });
         }
       });
     });
 
-    return () => map.remove();
+    return () => {
+      // Clean up marker when component unmounts
+      if (markerRef.current) {
+        markerRef.current.remove();
+      }
+      map.remove();
+    };
   }, []);
 
   return (
