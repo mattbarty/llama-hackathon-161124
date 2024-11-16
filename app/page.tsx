@@ -188,7 +188,9 @@ export default function Home() {
       mapboxgl: mapboxgl as any,
       marker: false,
       flyTo: false,
-      placeholder: 'Search for starting point'
+      placeholder: 'Search for starting point',
+      types: 'country,place',
+      limit: 5
     });
 
     const endGeocoder = new MapboxGeocoder({
@@ -196,7 +198,9 @@ export default function Home() {
       mapboxgl: mapboxgl as any,
       marker: false,
       flyTo: false,
-      placeholder: 'Search for destination'
+      placeholder: 'Search for destination',
+      types: 'country,place',
+      limit: 5
     });
 
     startGeocoder.on('result', (e) => {
