@@ -109,6 +109,43 @@ const Map = forwardRef(({ isChatVisible }: MapProps, ref) => {
     // Initialize geocoder after map is loaded
     map.on('load', () => {
       initializeGeocoder(map);
+
+      // Add click event handler for country selection
+      map.on('click', async (e) => {
+        const { lng, lat } = e.lngLat;
+
+        try {
+          // Reverse geocode the clicked coordinates
+          const response = await fetch(
+            `https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?types=country&access_token=${mapboxgl.accessToken}`
+          );
+
+          const data = await response.json();
+
+          if (data.features && data.features.length > 0) {
+            const country = data.features[0];
+            setSelectedCountry(country.text);
+
+            // Update marker
+            if (markerRef.current) {
+              markerRef.current.setLngLat(country.center);
+            } else {
+              markerRef.current = new mapboxgl.Marker()
+                .setLngLat(country.center)
+                .addTo(map);
+            }
+
+            // Fly to country
+            map.flyTo({
+              center: country.center,
+              zoom: 5,
+              essential: true
+            });
+          }
+        } catch (error) {
+          console.error('Error getting country from coordinates:', error);
+        }
+      });
     });
 
     // Add resize handler
@@ -128,6 +165,11 @@ const Map = forwardRef(({ isChatVisible }: MapProps, ref) => {
     // Cleanup function
     return () => {
       resizeObserver.disconnect();
+
+      // Remove click handler
+      if (mapRef.current) {
+        mapRef.current.off('click', 'click', () => { });
+      }
 
       // First remove the marker if it exists
       if (markerRef.current) {
