@@ -7,6 +7,11 @@ import '@mapbox/mapbox-gl-geocoder/dist/mapbox-gl-geocoder.css';
 import * as turf from '@turf/turf';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import type { Feature, FeatureCollection, LineString, Point, Position } from 'geojson';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Plane, Navigation } from 'lucide-react';
 
 type Coordinates = {
   lat: number;
@@ -235,80 +240,116 @@ export default function Home() {
   return (
     <main className="relative h-screen w-screen overflow-hidden">
       <div id="map" className="absolute inset-0" />
-      <div className="absolute top-4 left-4 z-10 bg-white p-4 rounded-lg shadow-lg">
-        <div className="space-y-4">
-          <div>
-            <h3 className="font-semibold mb-2">Starting Point</h3>
-            <div id="start-geocoder" className="mb-2" />
-            <div className="text-sm text-gray-600">
-              Selected: {startCoords.name}
+      <Card className="absolute top-4 left-4 z-10 w-[400px] shadow-lg">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Plane className="h-5 w-5" />
+            Flight Path Generator
+          </CardTitle>
+          <CardDescription>
+            Enter locations to create an animated flight path
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {/* Starting Point Section */}
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">Starting Point</Label>
+              <div id="start-geocoder" className="mb-2" />
+              <p className="text-sm text-muted-foreground">
+                Selected: {startCoords.name}
+              </p>
             </div>
-            <div className="grid grid-cols-2 gap-2 mt-2">
-              <input
-                type="number"
-                value={startCoords.lat}
-                onChange={(e) => setStartCoords(prev => ({
-                  ...prev,
-                  lat: parseFloat(e.target.value)
-                }))}
-                placeholder="Latitude"
-                className="border p-1 rounded text-sm"
-              />
-              <input
-                type="number"
-                value={startCoords.lng}
-                onChange={(e) => setStartCoords(prev => ({
-                  ...prev,
-                  lng: parseFloat(e.target.value)
-                }))}
-                placeholder="Longitude"
-                className="border p-1 rounded text-sm"
-              />
-            </div>
-          </div>
-          <div>
-            <h3 className="font-semibold mb-2">Destination</h3>
-            <div id="end-geocoder" className="mb-2" />
-            <div className="text-sm text-gray-600">
-              Selected: {endCoords.name}
-            </div>
-            <div className="grid grid-cols-2 gap-2 mt-2">
-              <input
-                type="number"
-                value={endCoords.lat}
-                onChange={(e) => setEndCoords(prev => ({
-                  ...prev,
-                  lat: parseFloat(e.target.value)
-                }))}
-                placeholder="Latitude"
-                className="border p-1 rounded text-sm"
-              />
-              <input
-                type="number"
-                value={endCoords.lng}
-                onChange={(e) => setEndCoords(prev => ({
-                  ...prev,
-                  lng: parseFloat(e.target.value)
-                }))}
-                placeholder="Longitude"
-                className="border p-1 rounded text-sm"
-              />
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label htmlFor="start-lat" className="text-xs">Latitude</Label>
+                <Input
+                  id="start-lat"
+                  type="number"
+                  value={startCoords.lat}
+                  onChange={(e) => setStartCoords(prev => ({
+                    ...prev,
+                    lat: parseFloat(e.target.value)
+                  }))}
+                  className="h-8"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="start-lng" className="text-xs">Longitude</Label>
+                <Input
+                  id="start-lng"
+                  type="number"
+                  value={startCoords.lng}
+                  onChange={(e) => setStartCoords(prev => ({
+                    ...prev,
+                    lng: parseFloat(e.target.value)
+                  }))}
+                  className="h-8"
+                />
+              </div>
             </div>
           </div>
-          <button
-            onClick={createAnimation}
-            className="w-full px-4 py-2 bg-[#3386c0] hover:bg-[#4ea0da] text-white font-semibold rounded-md"
-          >
-            Start Animation
-          </button>
-          <button
-            id="replay"
-            className="w-full px-4 py-2 bg-[#3386c0] hover:bg-[#4ea0da] disabled:bg-[#f5f5f5] disabled:text-[#c3c3c3] text-white font-semibold rounded-md"
-          >
-            Replay
-          </button>
-        </div>
-      </div>
+
+          {/* Destination Section */}
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">Destination</Label>
+              <div id="end-geocoder" className="mb-2" />
+              <p className="text-sm text-muted-foreground">
+                Selected: {endCoords.name}
+              </p>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label htmlFor="end-lat" className="text-xs">Latitude</Label>
+                <Input
+                  id="end-lat"
+                  type="number"
+                  value={endCoords.lat}
+                  onChange={(e) => setEndCoords(prev => ({
+                    ...prev,
+                    lat: parseFloat(e.target.value)
+                  }))}
+                  className="h-8"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="end-lng" className="text-xs">Longitude</Label>
+                <Input
+                  id="end-lng"
+                  type="number"
+                  value={endCoords.lng}
+                  onChange={(e) => setEndCoords(prev => ({
+                    ...prev,
+                    lng: parseFloat(e.target.value)
+                  }))}
+                  className="h-8"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex flex-col gap-2">
+            <Button
+              onClick={createAnimation}
+              className="w-full"
+              variant="default"
+            >
+              <Navigation className="mr-2 h-4 w-4" />
+              Start Animation
+            </Button>
+            <Button
+              id="replay"
+              className="w-full"
+              variant="secondary"
+            >
+              <Plane className="mr-2 h-4 w-4" />
+              Replay Animation
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
     </main>
   );
 }
