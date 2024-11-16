@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Send } from 'lucide-react';
 import InteractiveMessage from './InteractiveMessage';
+import { useConversation } from '../contexts/ConversationContext';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -14,16 +15,15 @@ interface Message {
 }
 
 export default function ChatBox() {
-  const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  const { messages, addMessage, isLoading, setIsLoading } = useConversation();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim() || isLoading) return;
 
     const userMessage = { role: 'user' as const, content: input };
-    setMessages(prev => [...prev, userMessage]);
+    addMessage(userMessage);
     setInput('');
     setIsLoading(true);
 
@@ -39,20 +39,19 @@ export default function ChatBox() {
       const data = await response.json();
 
       if (response.ok) {
-        setMessages(prev => [...prev, {
+        addMessage({
           role: 'assistant',
           content: data.message
-        }]);
+        });
       } else {
         throw new Error(data.error);
       }
     } catch (error) {
       console.error('Failed to send message:', error);
-      // Optionally add error message to chat
-      setMessages(prev => [...prev, {
+      addMessage({
         role: 'assistant',
         content: 'Sorry, I encountered an error processing your message.'
-      }]);
+      });
     } finally {
       setIsLoading(false);
     }
