@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Plane, Navigation } from 'lucide-react';
+import { UserProfile } from "./components/UserProfile";
 
 type Coordinates = {
   lat: number | null;
@@ -255,6 +256,7 @@ export default function Home() {
   return (
     <main className="relative h-screen w-screen overflow-hidden">
       <div id="map" className="absolute inset-0" />
+      <UserProfile />
       <Card className="absolute top-4 left-4 z-10 w-[400px] shadow-lg">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
