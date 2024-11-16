@@ -17,7 +17,7 @@ export default function Home() {
       style: 'mapbox://styles/mapbox/dark-v11',
       center: [-96, 37.8],
       zoom: 3,
-      pitch: 40
+      pitch: 40,
     });
 
     // San Francisco
@@ -67,6 +67,17 @@ export default function Home() {
     let counter = 0;
 
     map.on('load', () => {
+      // Create bounds using LngLat objects
+      const bounds = new mapboxgl.LngLatBounds(
+        new mapboxgl.LngLat(origin[0], origin[1]),
+        new mapboxgl.LngLat(destination[0], destination[1])
+      );
+
+      map.fitBounds(bounds, {
+        padding: { top: 50, bottom: 50, left: 50, right: 50 },
+        duration: 0
+      });
+
       map.addSource('route', {
         type: 'geojson',
         data: route
@@ -164,9 +175,9 @@ export default function Home() {
   }, []);
 
   return (
-    <main className="relative min-h-screen">
+    <main className="relative h-screen w-screen overflow-hidden">
       <div id="map" className="absolute inset-0" />
-      <div className="absolute top-4 left-4">
+      <div className="absolute top-4 left-4 z-10">
         <button
           id="replay"
           className="px-5 py-2.5 bg-[#3386c0] hover:bg-[#4ea0da] disabled:bg-[#f5f5f5] disabled:text-[#c3c3c3] text-white font-semibold text-sm rounded-md"
