@@ -268,12 +268,11 @@ const Map = forwardRef(({ isChatVisible, onCountrySelect, selectedCountry }: Map
       <div id="map" className="absolute inset-0" />
 
       {/* Search bar only */}
-      <div className="absolute top-4 right-4 z-10">
+      <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10 border-2 border-gray-200 rounded-lg">
         <div className="flex items-center gap-2 bg-white p-2 rounded-lg">
           <div className="flex items-center gap-2 w-full relative">
-            <div id="location-search" className="w-[300px] h-10 z-20 py-1" />
+            <div id="location-search" className="w-[300px] h-10 z-30 py-1" />
             <Globe className="h-5 w-5 absolute left-2 text-gray-500 pointer-events-none z-30 top-1/2 -translate-y-1/2" />
-            <Navigation className="h-5 w-5 absolute right-2 text-gray-500 pointer-events-none z-30 top-1/2 -translate-y-1/2" />
           </div>
         </div>
       </div>

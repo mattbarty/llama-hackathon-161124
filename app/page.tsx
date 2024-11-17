@@ -4,7 +4,7 @@ import Map from './components/Map';
 import ChatBox from './components/ChatBox';
 import { useUser } from './contexts/UserContext';
 import { useState, useRef } from 'react';
-import { Maximize2, Minimize2, PanelLeftOpen, GripVertical } from 'lucide-react';
+import { Maximize2, Minimize2, PanelLeftOpen, GripVertical, MessageCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { MapProvider } from './contexts/MapContext';
 import { ConversationProvider } from './contexts/ConversationContext';
@@ -18,7 +18,7 @@ import {
 
 export default function Home() {
   const user = useUser();
-  const [isChatVisible, setIsChatVisible] = useState(true);
+  const [isChatVisible, setIsChatVisible] = useState(false);
   const mapRef = useRef<any>(null);
   const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
 
@@ -94,7 +94,7 @@ export default function Home() {
                     )}
                   </ResizablePanelGroup>
                 ) : (
-                  <div className="h-full w-full relative">
+                  <div className="h-full w-full relative z-10">
                     <Map
                       ref={mapRef}
                       isChatVisible={isChatVisible}
@@ -110,11 +110,18 @@ export default function Home() {
                       <PanelLeftOpen className="h-4 w-4" />
                     </Button>
                     {selectedCountry && (
-                      <div className="absolute right-4 top-20 w-[350px] bg-white rounded-lg border-2 border-gray-200 z-10 h-[600px]">
+                      <div className="absolute right-4 top-4 w-[375px] bg-white rounded-lg border-2 border-gray-200 z-10 h-[600px] p-2">
                         <CountryCard
                           country={selectedCountry}
                           onClose={() => setSelectedCountry(null)}
                         />
+                        <button
+                          className="flex items-center gap-2 justify-center px-4 py-2 rounded-lg w-full translate-y-4 bg-sky-500 text-white hover:bg-sky-600"
+                          onClick={() => setIsChatVisible(!isChatVisible)}
+                        >
+                          <MessageCircle className="h-4 w-4" fill="white" />
+                          Chat with {selectedCountry}
+                        </button>
                       </div>
                     )}
                   </div>
