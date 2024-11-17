@@ -58,7 +58,7 @@ export default function Home() {
                       className="h-full rounded-lg border-2 border-gray-200"
                     >
                       <ResizablePanel
-                        defaultSize={selectedCountry ? 60 : 100}
+                        defaultSize={selectedCountry ? 25 : 100}
                         minSize={30}
                       >
                         <div className="h-full w-full relative">
