@@ -43,9 +43,9 @@ export function InitialOverlay() {
             className="text-center text-white p-8 rounded-lg max-w-md"
           >
             <Globe2 className="h-16 w-16 mx-auto mb-6 animate-pulse" />
-            <h2 className="text-2xl font-semibold mb-4">Welcome</h2>
+            <h2 className="text-2xl font-semibold mb-4">Welcome to Little Expat</h2>
             <p className="text-xl opacity-90">
-              Click on any country to begin
+              Click on any country to begin your journey
             </p>
             <p className="mt-6 text-sm opacity-75">
               Click anywhere or press ESC to dismiss

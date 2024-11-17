@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState, forwardRef, useImperativeHandle } from 'react';
+import { useEffect, useRef, useState, forwardRef, useImperativeHandle, useCallback } from 'react';
 import mapboxgl from 'mapbox-gl';
 import MapboxGeocoder from '@mapbox/mapbox-gl-geocoder';
 import '@mapbox/mapbox-gl-geocoder/dist/mapbox-gl-geocoder.css';
@@ -29,8 +29,7 @@ const Map = forwardRef(({ isChatVisible, onCountrySelect, selectedCountry }: Map
   const [selectedCity, setSelectedCity] = useState<string | null>(null);
   const user = useUser();
 
-  // Function to initialize or reinitialize the geocoder
-  const initializeGeocoder = (map: mapboxgl.Map) => {
+  const initializeGeocoder = useCallback((map: mapboxgl.Map) => {
     // Clear any existing geocoder
     if (geocoderRef.current) {
       geocoderRef.current.onRemove();
@@ -91,7 +90,7 @@ const Map = forwardRef(({ isChatVisible, onCountrySelect, selectedCountry }: Map
         essential: true
       });
     });
-  };
+  }, [onCountrySelect]);
 
   // Effect for map initialization
   useEffect(() => {
@@ -196,11 +195,10 @@ const Map = forwardRef(({ isChatVisible, onCountrySelect, selectedCountry }: Map
         mapRef.current = null;
       }
     };
-  }, []);
+  }, [theme, initializeGeocoder, onCountrySelect]);
 
   // Effect to handle search container visibility
   useEffect(() => {
-    // Small delay to ensure DOM is ready
     const timer = setTimeout(() => {
       const searchContainer = document.getElementById('location-search');
       if (searchContainer && mapRef.current && !searchContainer.hasChildNodes()) {
@@ -209,7 +207,7 @@ const Map = forwardRef(({ isChatVisible, onCountrySelect, selectedCountry }: Map
     }, 100);
 
     return () => clearTimeout(timer);
-  }, [isChatVisible]);
+  }, [isChatVisible, initializeGeocoder]);
 
   useImperativeHandle(ref, () => ({
     focusOnCountry: (countryName: string) => {
@@ -288,5 +286,7 @@ const Map = forwardRef(({ isChatVisible, onCountrySelect, selectedCountry }: Map
     </div>
   );
 });
+
+Map.displayName = 'Map';
 
 export default Map;

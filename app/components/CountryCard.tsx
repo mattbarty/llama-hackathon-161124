@@ -148,7 +148,16 @@ const CountryCard = ({ country = "Japan", onClose }: CountryCardProps) => {
     };
 
     loadData();
-  }, [activeTab, country, dataLoaded]);
+  }, [
+    activeTab,
+    country,
+    dataLoaded,
+    getLegalData,
+    getQualityData,
+    getWorkData,
+    getCultureData,
+    getCitiesData
+  ]);
 
   // Reset loaded state when country changes
   useEffect(() => {
@@ -179,7 +188,7 @@ const CountryCard = ({ country = "Japan", onClose }: CountryCardProps) => {
             >
               <div className="h-full border-b border-gray-200 relative">
                 <div className="relative z-10">
-                  <div className="flex items-center gap-1 text-xs font-semibold top-2 right-2 absolute bg-teal-500 px-2 py-1 rounded-full text-white">
+                  <div className="flex items-center gap-1 text-xs font-semibold top-2 right-2 absolute bg-teal-500 px-2 py-1 rounded-[14px] text-white">
                     Capital
                   </div>
                 </div>
@@ -200,10 +209,10 @@ const CountryCard = ({ country = "Japan", onClose }: CountryCardProps) => {
                   {capital.description}
                 </p>
                 <div className="flex gap-2 mt-4">
-                  <span className="text-xs px-2 py-1 bg-gray-100 rounded-full text-gray-600">
+                  <span className="text-xs px-2 py-1 bg-gray-100 rounded-[14px] text-gray-600">
                     {capital.climate}
                   </span>
-                  <span className="text-xs px-2 py-1 bg-gray-100 rounded-full text-gray-600">
+                  <span className="text-xs px-2 py-1 bg-gray-100 rounded-[14px] text-gray-600">
                     {capital.costOfLiving}
                   </span>
                 </div>
@@ -235,10 +244,10 @@ const CountryCard = ({ country = "Japan", onClose }: CountryCardProps) => {
                     {city.description}
                   </p>
                   <div className="flex gap-2 mt-3">
-                    <span className="text-xs px-2 py-1 bg-gray-100 rounded-full text-gray-600">
+                    <span className="text-xs px-2 py-1 bg-gray-100 rounded-[14px] text-gray-600">
                       {city.climate}
                     </span>
-                    <span className="text-xs px-2 py-1 bg-gray-100 rounded-full text-gray-600">
+                    <span className="text-xs px-2 py-1 bg-gray-100 rounded-[14px] text-gray-600">
                       {city.costOfLiving}
                     </span>
                   </div>
@@ -295,7 +304,7 @@ const CountryCard = ({ country = "Japan", onClose }: CountryCardProps) => {
             {cityInfo.neighborhoods.map((neighborhood: string) => (
               <span
                 key={neighborhood}
-                className="px-2 py-1 bg-gray-100 rounded-full text-sm text-gray-600"
+                className="px-2 py-1 bg-gray-100 rounded-[14px] text-sm text-gray-600"
               >
                 {neighborhood}
               </span>
@@ -313,7 +322,7 @@ const CountryCard = ({ country = "Japan", onClose }: CountryCardProps) => {
         <h1 className="text-2xl font-semibold">{country}</h1>
         <button
           onClick={onClose}
-          className="p-1 hover:bg-gray-100 rounded-full transition-colors"
+          className="p-1 hover:bg-gray-100 rounded-[14px] transition-colors"
         >
           <X size={20} className="text-gray-500" />
         </button>
@@ -350,7 +359,7 @@ const CountryCard = ({ country = "Japan", onClose }: CountryCardProps) => {
               <div className="space-y-6 px-4 py-2">
                 {isLoading ? (
                   <div className="flex items-center justify-center h-full">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900" />
+                    <div className="animate-spin rounded-[14px] h-8 w-8 border-b-2 border-gray-900" />
                   </div>
                 ) : citiesData ? (
                   <>
@@ -426,7 +435,7 @@ const CountryCard = ({ country = "Japan", onClose }: CountryCardProps) => {
               <div className="space-y-4 px-4 py-2">
                 {isLoading ? (
                   <div className="flex items-center justify-center h-full">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900" />
+                    <div className="animate-spin rounded-[14px] h-8 w-8 border-b-2 border-gray-900" />
                   </div>
                 ) : legalData ? (
                   <>
@@ -457,7 +466,7 @@ const CountryCard = ({ country = "Japan", onClose }: CountryCardProps) => {
               <div className="space-y-6 px-4 py-2">
                 {isLoading ? (
                   <div className="flex items-center justify-center h-full">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900" />
+                    <div className="animate-spin rounded-[14px] h-8 w-8 border-b-2 border-gray-900" />
                   </div>
                 ) : qualityData ? (
                   <>
@@ -484,7 +493,7 @@ const CountryCard = ({ country = "Japan", onClose }: CountryCardProps) => {
                       <div className="space-y-2">
                         <div className="flex items-center gap-2">
                           <h4 className="font-medium">Safety Index</h4>
-                          <span className="text-sm bg-green-100 text-green-800 px-2 py-1 rounded-full">
+                          <span className="text-sm bg-green-100 text-green-800 px-2 py-1 rounded-[14px]">
                             {qualityData.safety.index}
                           </span>
                         </div>
@@ -542,7 +551,7 @@ const CountryCard = ({ country = "Japan", onClose }: CountryCardProps) => {
               <div className="space-y-6 px-4 py-2">
                 {isLoading ? (
                   <div className="flex items-center justify-center h-full">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900" />
+                    <div className="animate-spin rounded-[14px] h-8 w-8 border-b-2 border-gray-900" />
                   </div>
                 ) : workData ? (
                   <>
@@ -554,7 +563,7 @@ const CountryCard = ({ country = "Japan", onClose }: CountryCardProps) => {
                           <h4 className="font-medium">In-Demand Sectors</h4>
                           <div className="flex flex-wrap gap-2 mt-1">
                             {workData.jobMarket.inDemandSectors.map((sector, index) => (
-                              <span key={index} className="text-sm bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
+                              <span key={index} className="text-sm bg-blue-100 text-blue-800 px-2 py-1 rounded-[14px]">
                                 {sector}
                               </span>
                             ))}
@@ -642,7 +651,7 @@ const CountryCard = ({ country = "Japan", onClose }: CountryCardProps) => {
               <div className="space-y-6 px-4 py-2">
                 {isLoading ? (
                   <div className="flex items-center justify-center h-full">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900" />
+                    <div className="animate-spin rounded-[14px] h-8 w-8 border-b-2 border-gray-900" />
                   </div>
                 ) : cultureData ? (
                   <>
@@ -796,7 +805,7 @@ const CityDetails = ({ city }: { city: CityData; }) => (
           {city.neighborhoods.map((neighborhood: string, index: number) => (
             <span
               key={index}
-              className="px-3 py-1 bg-gray-100 rounded-full text-sm text-gray-700"
+              className="px-3 py-1 bg-gray-100 rounded-[14px] text-sm text-gray-700"
             >
               {neighborhood}
             </span>
