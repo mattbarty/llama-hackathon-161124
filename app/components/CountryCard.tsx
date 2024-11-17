@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { Globe2, Building2, Heart, Briefcase, Users, Home, BookOpen, Scale, ChevronLeft, X, Star } from 'lucide-react';
+import { Globe2, Building2, Heart, Briefcase, Users, Home, BookOpen, Scale, ChevronLeft, X, Star, RefreshCw } from 'lucide-react';
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { CitiesData, CityData, CultureData, QualityData, useCountryData } from '@/app/contexts/CountryDataContext';
 import { LegalData, WorkData } from '@/app/contexts/CountryDataContext';
@@ -178,6 +178,45 @@ const CountryCard = ({ country = "Japan", onClose }: CountryCardProps) => {
     });
   }, [country]);
 
+  // Add refresh handler
+  const handleRefresh = async () => {
+    setIsTabLoading(true);
+    try {
+      let data;
+      switch (activeTab) {
+        case 'immigration':
+          data = await getLegalData(country, true);
+          setLegalData(data);
+          break;
+        case 'quality':
+          data = await getQualityData(country, true);
+          setQualityData(data);
+          break;
+        case 'work':
+          data = await getWorkData(country, true);
+          setWorkData(data);
+          break;
+        case 'culture':
+          data = await getCultureData(country, true);
+          setCultureData(data);
+          break;
+        case 'living':
+          data = await getCitiesData(country, true);
+          setCitiesData(data);
+          break;
+      }
+      // Reset the loaded state for this tab
+      setDataLoaded(prev => ({
+        ...prev,
+        [activeTab === 'immigration' ? 'legal' : activeTab]: true
+      }));
+    } catch (error) {
+      console.error(`Failed to refresh ${activeTab} data:`, error);
+    } finally {
+      setIsTabLoading(false);
+    }
+  };
+
   const renderCityList = () => {
     if (!citiesData) {
       return (
@@ -317,16 +356,32 @@ const CountryCard = ({ country = "Japan", onClose }: CountryCardProps) => {
   };
 
   return (
-    <div className="h-full overflow-auto">
-      {/* Header */}
-      <div className="flex justify-between items-center p-4 flex-shrink-0">
-        <h1 className="text-2xl font-semibold">{country}</h1>
-        <button
-          onClick={onClose}
-          className="p-1 hover:bg-gray-100 rounded-[14px] transition-colors"
-        >
-          <X size={20} className="text-gray-500" />
-        </button>
+    <div className="h-full flex flex-col">
+      {/* Header with refresh and close buttons */}
+      <div className="flex items-center justify-between p-4 border-b">
+        <div className="flex items-center gap-2">
+          <Globe2 className="h-5 w-5 text-gray-500" />
+          <h2 className="text-lg font-semibold">{country}</h2>
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handleRefresh}
+            disabled={isTabLoading || isLoading}
+            className={`p-2 rounded-full transition-colors duration-200 ${isTabLoading || isLoading
+                ? 'text-gray-300 cursor-not-allowed'
+                : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'
+              }`}
+            title="Refresh current tab"
+          >
+            <RefreshCw className={`h-4 w-4 ${isTabLoading || isLoading ? 'animate-spin' : ''}`} />
+          </button>
+          <button
+            onClick={onClose}
+            className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-full transition-colors duration-200"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
       </div>
 
       {/* Tabs */}
@@ -335,7 +390,7 @@ const CountryCard = ({ country = "Japan", onClose }: CountryCardProps) => {
           <TabsTrigger
             value="living"
             className="flex flex-col items-center p-2"
-            disabled={isTabLoading}
+            disabled={isTabLoading || isLoading}
           >
             <Building2 size={16} />
             <span className="text-xs mt-1">Cities</span>
@@ -343,7 +398,7 @@ const CountryCard = ({ country = "Japan", onClose }: CountryCardProps) => {
           <TabsTrigger
             value="immigration"
             className="flex flex-col items-center p-2"
-            disabled={isTabLoading}
+            disabled={isTabLoading || isLoading}
           >
             <Scale size={16} />
             <span className="text-xs mt-1">Legal</span>
@@ -351,7 +406,7 @@ const CountryCard = ({ country = "Japan", onClose }: CountryCardProps) => {
           <TabsTrigger
             value="quality"
             className="flex flex-col items-center p-2"
-            disabled={isTabLoading}
+            disabled={isTabLoading || isLoading}
           >
             <Heart size={16} />
             <span className="text-xs mt-1">Quality</span>
@@ -359,7 +414,7 @@ const CountryCard = ({ country = "Japan", onClose }: CountryCardProps) => {
           <TabsTrigger
             value="work"
             className="flex flex-col items-center p-2"
-            disabled={isTabLoading}
+            disabled={isTabLoading || isLoading}
           >
             <Briefcase size={16} />
             <span className="text-xs mt-1">Work</span>
@@ -367,7 +422,7 @@ const CountryCard = ({ country = "Japan", onClose }: CountryCardProps) => {
           <TabsTrigger
             value="culture"
             className="flex flex-col items-center p-2"
-            disabled={isTabLoading}
+            disabled={isTabLoading || isLoading}
           >
             <Users size={16} />
             <span className="text-xs mt-1">Culture</span>

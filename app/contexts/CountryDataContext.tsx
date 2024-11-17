@@ -104,11 +104,11 @@ interface CountryData {
 
 interface CountryDataContextType {
   countryData: Record<string, CountryData>;
-  getLegalData: (country: string) => Promise<LegalData>;
-  getQualityData: (country: string) => Promise<QualityData>;
-  getWorkData: (country: string) => Promise<WorkData>;
-  getCultureData: (country: string) => Promise<CultureData>;
-  getCitiesData: (country: string) => Promise<CitiesData>;
+  getLegalData: (country: string, forceRefresh?: boolean) => Promise<LegalData>;
+  getQualityData: (country: string, forceRefresh?: boolean) => Promise<QualityData>;
+  getWorkData: (country: string, forceRefresh?: boolean) => Promise<WorkData>;
+  getCultureData: (country: string, forceRefresh?: boolean) => Promise<CultureData>;
+  getCitiesData: (country: string, forceRefresh?: boolean) => Promise<CitiesData>;
   getAllCountryData: (country: string) => Promise<{
     legal: LegalData;
     quality: QualityData;
@@ -126,8 +126,8 @@ export function CountryDataProvider({ children }: { children: ReactNode; }) {
   const [isLoading, setIsLoading] = useState(false);
   const { language } = useLanguage();
 
-  const getLegalData = async (country: string): Promise<LegalData> => {
-    if (countryData[country]?.legal) {
+  const getLegalData = async (country: string, forceRefresh?: boolean): Promise<LegalData> => {
+    if (!forceRefresh && countryData[country]?.legal) {
       return countryData[country].legal!;
     }
 
@@ -164,8 +164,8 @@ export function CountryDataProvider({ children }: { children: ReactNode; }) {
     }
   };
 
-  const getQualityData = async (country: string): Promise<QualityData> => {
-    if (countryData[country]?.quality) {
+  const getQualityData = async (country: string, forceRefresh?: boolean): Promise<QualityData> => {
+    if (!forceRefresh && countryData[country]?.quality) {
       return countryData[country].quality!;
     }
 
@@ -202,8 +202,8 @@ export function CountryDataProvider({ children }: { children: ReactNode; }) {
     }
   };
 
-  const getWorkData = async (country: string): Promise<WorkData> => {
-    if (countryData[country]?.work) {
+  const getWorkData = async (country: string, forceRefresh?: boolean): Promise<WorkData> => {
+    if (!forceRefresh && countryData[country]?.work) {
       return countryData[country].work!;
     }
 
@@ -240,8 +240,8 @@ export function CountryDataProvider({ children }: { children: ReactNode; }) {
     }
   };
 
-  const getCultureData = async (country: string): Promise<CultureData> => {
-    if (countryData[country]?.culture) {
+  const getCultureData = async (country: string, forceRefresh?: boolean): Promise<CultureData> => {
+    if (!forceRefresh && countryData[country]?.culture) {
       return countryData[country].culture!;
     }
 
@@ -278,8 +278,8 @@ export function CountryDataProvider({ children }: { children: ReactNode; }) {
     }
   };
 
-  const getCitiesData = async (country: string): Promise<CitiesData> => {
-    if (countryData[country]?.cities) {
+  const getCitiesData = async (country: string, forceRefresh?: boolean): Promise<CitiesData> => {
+    if (!forceRefresh && countryData[country]?.cities) {
       return countryData[country].cities!;
     }
 
