@@ -179,87 +179,80 @@ const CountryCard = ({ country = "Japan", onClose }: CountryCardProps) => {
   }, [country]);
 
   const renderCityList = () => {
+    if (!citiesData) {
+      return (
+        <div className="text-center text-gray-500 py-4">
+          Loading city information...
+        </div>
+      );
+    }
+
     const capital = citiesData?.capital;
     const otherCities = citiesData?.majorCities || [];
 
     return (
       <div className="space-y-6 h-full">
         {/* Capital City Card */}
-        {capital && (
-          <div>
-            <div>
-              <h3 className="text-sm font-semibold text-gray-500 mb-3">Capital City</h3>
+        {capital ? (
+          <div className="bg-white rounded-lg border p-4 hover:border-blue-200 transition-colors duration-200">
+            <div className="flex justify-between items-start mb-2">
+              <h4 className="font-medium">{capital.name}</h4>
+              <span className="text-sm text-gray-500">{capital.population}</span>
             </div>
-            <div
-              onClick={() => setSelectedCity(capital.name)}
-              className="group relative overflow-hidden rounded-lg border shadow-sm hover:shadow-md transition-all cursor-pointer"
-            >
-              <div className="h-full border-b border-gray-200 relative">
-                <div className="relative z-10">
-                  <div className="flex items-center gap-1 text-xs font-semibold top-2 right-2 absolute bg-teal-500 px-2 py-1 rounded-[14px] text-white">
-                    Capital
-                  </div>
-                </div>
-                <div
-                  className="bg-gradient-to-br from-teal-100 to-teal-50 w-full h-full absolute top-0 left-0"
-                />
+            <p className="text-sm text-gray-600 line-clamp-2">{capital.description}</p>
+            {selectedCity === capital.name ? (
+              <div className="mt-4">
+                <CityDetails city={capital} />
+                <button
+                  onClick={() => setSelectedCity(null)}
+                  className="mt-4 text-sm text-blue-500 hover:text-blue-600"
+                >
+                  Show less
+                </button>
               </div>
-              <div className="p-6 bg-white">
-                <div className="flex justify-between items-start">
-                  <div className="flex w-full justify-between items-center">
-                    <h3 className="font-semibold text-xl group-hover:text-blue-600 transition-colors">
-                      {capital.name}
-                    </h3>
-                    <p className="text-sm text-gray-500">{capital.population}</p>
-                  </div>
-                </div>
-                <p className="text-sm text-gray-600 mt-2">
-                  {capital.description}
-                </p>
-                <div className="flex gap-2 mt-4">
-                  <span className="text-xs px-2 py-1 bg-gray-100 rounded-[14px] text-gray-600">
-                    {capital.climate}
-                  </span>
-                  <span className="text-xs px-2 py-1 bg-gray-100 rounded-[14px] text-gray-600">
-                    {capital.costOfLiving}
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Other Cities Grid */}
-        <div>
-          <h3 className="text-sm font-semibold text-gray-500 mb-3">Major Cities</h3>
-          <div className="flex flex-col gap-4">
-            {otherCities.map((city) => (
-              <div
-                key={city.name}
-                onClick={() => setSelectedCity(city.name)}
-                className="group relative overflow-hidden rounded-lg border shadow-sm hover:shadow-md transition-all cursor-pointer"
+            ) : (
+              <button
+                onClick={() => setSelectedCity(capital.name)}
+                className="mt-2 text-sm text-blue-500 hover:text-blue-600"
               >
-                <div className="p-4 bg-white">
-                  <div className="flex justify-between items-start">
-                    <div className="flex w-full justify-between items-center">
-                      <h3 className="font-semibold text-lg group-hover:text-blue-600 transition-colors">
-                        {city.name}
-                      </h3>
-                      <p className="text-sm text-gray-500">{city.population}</p>
-                    </div>
-                  </div>
-                  <p className="text-sm text-gray-600 mt-2 line-clamp-2">
-                    {city.description}
-                  </p>
-                  <div className="flex gap-2 mt-3">
-                    <span className="text-xs px-2 py-1 bg-gray-100 rounded-[14px] text-gray-600">
-                      {city.climate}
-                    </span>
-                    <span className="text-xs px-2 py-1 bg-gray-100 rounded-[14px] text-gray-600">
-                      {city.costOfLiving}
-                    </span>
-                  </div>
+                Learn more
+              </button>
+            )}
+          </div>
+        ) : null}
+
+        {/* Major Cities Grid */}
+        <div>
+          <h3 className="font-medium mb-3">Major Cities</h3>
+          <div className="grid grid-cols-1 gap-4">
+            {otherCities.map((city, index) => (
+              <div
+                key={index}
+                className="bg-white rounded-lg border p-4 hover:border-blue-200 transition-colors duration-200"
+              >
+                <div className="flex justify-between items-start mb-2">
+                  <h4 className="font-medium">{city.name}</h4>
+                  <span className="text-sm text-gray-500">{city.population}</span>
                 </div>
+                <p className="text-sm text-gray-600 line-clamp-2">{city.description}</p>
+                {selectedCity === city.name ? (
+                  <div className="mt-4">
+                    <CityDetails city={city} />
+                    <button
+                      onClick={() => setSelectedCity(null)}
+                      className="mt-4 text-sm text-blue-500 hover:text-blue-600"
+                    >
+                      Show less
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => setSelectedCity(city.name)}
+                    className="mt-2 text-sm text-blue-500 hover:text-blue-600"
+                  >
+                    Learn more
+                  </button>
+                )}
               </div>
             ))}
           </div>
@@ -384,75 +377,13 @@ const CountryCard = ({ country = "Japan", onClose }: CountryCardProps) => {
         <div className="flex-1 min-h-0">
           <TabsContent value="living" className="h-full data-[state=active]:flex flex-col">
             <ScrollArea className="flex-1">
-              <div className="space-y-6 px-4 py-2">
-                {isLoading ? (
+              <div className="px-4 py-2">
+                {isTabLoading ? (
                   <div className="flex items-center justify-center h-full">
                     <div className="animate-spin rounded-[14px] h-8 w-8 border-b-2 border-gray-900" />
                   </div>
-                ) : citiesData ? (
-                  <>
-                    {selectedCity ? (
-                      <>
-                        <div className="flex items-center gap-2 mb-6">
-                          <button
-                            onClick={() => setSelectedCity(null)}
-                            className="flex items-center text-sm text-blue-600 hover:text-blue-800"
-                          >
-                            <ChevronLeft className="h-4 w-4" />
-                            Back to cities
-                          </button>
-                        </div>
-                        <div className="space-y-4">
-                          {selectedCity === citiesData.capital.name ? (
-                            <CityDetails city={citiesData.capital} />
-                          ) : (
-                            <CityDetails
-                              city={citiesData.majorCities.find(city => city.name === selectedCity)!}
-                            />
-                          )}
-                        </div>
-                      </>
-                    ) : (
-                      <>
-                        <div className="space-y-4">
-                          <h3 className="font-semibold text-lg">Capital City</h3>
-                          <div
-                            className="p-4 rounded-lg border hover:border-blue-500 cursor-pointer transition-colors"
-                            onClick={() => setSelectedCity(citiesData.capital.name)}
-                          >
-                            <div className="flex justify-between items-start mb-2">
-                              <h4 className="font-medium">{citiesData.capital.name}</h4>
-                              <span className="text-sm text-gray-500">{citiesData.capital.population}</span>
-                            </div>
-                            <p className="text-sm text-gray-600 line-clamp-2">{citiesData.capital.description}</p>
-                          </div>
-                        </div>
-
-                        <div className="space-y-4">
-                          <h3 className="font-semibold text-lg">Major Cities</h3>
-                          <div className="space-y-3">
-                            {citiesData.majorCities.map((city, index) => (
-                              <div
-                                key={index}
-                                className="p-4 rounded-lg border hover:border-blue-500 cursor-pointer transition-colors"
-                                onClick={() => setSelectedCity(city.name)}
-                              >
-                                <div className="flex justify-between items-start mb-2">
-                                  <h4 className="font-medium">{city.name}</h4>
-                                  <span className="text-sm text-gray-500">{city.population}</span>
-                                </div>
-                                <p className="text-sm text-gray-600 line-clamp-2">{city.description}</p>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      </>
-                    )}
-                  </>
                 ) : (
-                  <div className="text-center text-gray-500">
-                    Failed to load city information
-                  </div>
+                  renderCityList()
                 )}
               </div>
             </ScrollArea>

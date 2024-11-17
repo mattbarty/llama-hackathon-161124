@@ -3,6 +3,7 @@ import { UserProvider } from "./contexts/UserContext";
 import { CountryDataProvider } from "./contexts/CountryDataContext";
 import { LanguageProvider } from './contexts/LanguageContext';
 import './globals.css';
+import { ConversationProvider } from "./contexts/ConversationContext";
 
 export const metadata: Metadata = {
   title: "llama-hackathon",
@@ -20,7 +21,9 @@ export default function RootLayout({
         <LanguageProvider>
           <UserProvider>
             <CountryDataProvider>
-              {children}
+              <ConversationProvider>
+                {children}
+              </ConversationProvider>
             </CountryDataProvider>
           </UserProvider>
         </LanguageProvider>

@@ -30,7 +30,15 @@ interface SuggestedQuestion {
 }
 
 export default function ChatBox({ country, countryData }: ChatBoxProps) {
-  const { messages, addMessage, isLoading, setIsLoading, resetConversation } = useConversation();
+  const {
+    messages,
+    addMessage,
+    isLoading,
+    setIsLoading,
+    resetConversation,
+    currentCountry,
+    setCurrentCountry
+  } = useConversation();
   const [input, setInput] = useState('');
   const [suggestedQuestions, setSuggestedQuestions] = useState<SuggestedQuestion[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -120,10 +128,9 @@ export default function ChatBox({ country, countryData }: ChatBoxProps) {
   // Initialize conversation with generated response
   useEffect(() => {
     const initializeChat = async () => {
-      if (country && countryData) {
-        // Reset the conversation before initializing
-        resetConversation();
+      if (country && countryData && messages.length === 0 && !isLoading) {
         setIsLoading(true);
+        setCurrentCountry(country);
 
         // Create detailed system prompt
         const systemPrompt = {
@@ -156,6 +163,9 @@ Guidelines:
         };
 
         try {
+          // Add the system prompt first
+          addMessage(systemPrompt as Message);
+
           const response = await fetch('/api/callGroq', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -172,11 +182,8 @@ Guidelines:
           });
 
           const data = await response.json();
-
           if (data.error) throw new Error(data.error);
 
-          // Add both messages in sequence
-          addMessage(systemPrompt as Message);
           addMessage({
             role: 'assistant',
             content: data.message
@@ -184,7 +191,6 @@ Guidelines:
         } catch (error) {
           console.error('Failed to initialize chat:', error);
           // Fallback welcome message
-          addMessage(systemPrompt as Message);
           addMessage({
             role: 'assistant',
             content: `**Welcome!** 👋 I'm here to help you learn about ${country}. What would you like to know?`
@@ -196,7 +202,7 @@ Guidelines:
     };
 
     initializeChat();
-  }, [country, countryData]);
+  }, [country, countryData, messages.length, addMessage, language, isLoading]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -242,13 +248,27 @@ Guidelines:
 
   return (
     <div className="flex flex-col h-full bg-gray-50">
+      <div className="flex items-center justify-between px-4 py-2 bg-white border-b">
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-gray-500">Chatting about:</span>
+          <span className="px-2 py-1 text-sm font-medium bg-blue-100 text-blue-800 rounded-[14px]">
+            {country || currentCountry}
+          </span>
+        </div>
+        <button
+          onClick={resetConversation}
+          className="text-sm text-gray-500 hover:text-gray-700 px-2 py-1 rounded-md hover:bg-gray-100"
+        >
+          Reset Chat
+        </button>
+      </div>
+
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {messages.map((message, index) => {
-          console.log(index);
-          // Skip system messages
+          // Only skip system messages, show all other messages
           if (message.role === 'system') return null;
-          // Skip welcome message
-          if (index === 1) return null;
+          if (index === 2 && message.role === 'assistant') return null;
+          console.log(message, index);
 
           return (
             <div
