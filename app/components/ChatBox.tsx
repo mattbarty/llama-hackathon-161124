@@ -25,10 +25,94 @@ interface ChatBoxProps {
   } | null;
 }
 
+interface SuggestedQuestion {
+  text: string;
+}
+
 export default function ChatBox({ country, countryData }: ChatBoxProps) {
   const { messages, addMessage, isLoading, setIsLoading } = useConversation();
   const [input, setInput] = useState('');
+  const [suggestedQuestions, setSuggestedQuestions] = useState<SuggestedQuestion[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Function to fetch suggested questions
+  const fetchSuggestedQuestions = async (lastResponse: string) => {
+    try {
+      const response = await fetch('/api/callGroq', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messages: [
+            {
+              role: 'system',
+              content: 'You are a helpful assistant. Based on the previous response and available country data, suggest 3 relevant follow-up questions. Return ONLY a JSON array of questions, no other text. Format: ["question1", "question2", "question3"]'
+            },
+            {
+              role: 'user',
+              content: `Previous response: "${lastResponse}". Suggest 3 relevant follow-up questions about ${country}.`
+            }
+          ]
+        }),
+      });
+
+      const data = await response.json();
+      if (data.error) throw new Error(data.error);
+
+      // Parse the response as JSON
+      const questions = JSON.parse(data.message);
+      setSuggestedQuestions(questions.map((text: string) => ({ text })));
+    } catch (error) {
+      console.error('Failed to fetch suggested questions:', error);
+      setSuggestedQuestions([]);
+    }
+  };
+
+  // Update suggested questions when assistant responds
+  useEffect(() => {
+    const lastMessage = messages[messages.length - 1];
+    if (lastMessage?.role === 'assistant') {
+      fetchSuggestedQuestions(lastMessage.content);
+    }
+  }, [messages]);
+
+  // Handle suggested question click
+  const handleSuggestedQuestion = async (question: string) => {
+    if (isLoading) return;
+
+    // Clear suggested questions
+    setSuggestedQuestions([]);
+
+    // Submit the question
+    const userMessage = { role: 'user' as const, content: question };
+    addMessage(userMessage);
+    setIsLoading(true);
+
+    try {
+      const response = await fetch('/api/callGroq', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messages: messages.concat(userMessage)
+        }),
+      });
+
+      const data = await response.json();
+      if (data.error) throw new Error(data.error);
+
+      addMessage({
+        role: 'assistant',
+        content: data.message
+      });
+    } catch (error) {
+      console.error('Failed to get response:', error);
+      addMessage({
+        role: 'assistant',
+        content: "I apologize, but I'm having trouble responding right now. Please try again."
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   // Initialize conversation with generated response
   useEffect(() => {
@@ -182,6 +266,26 @@ Guidelines:
         <div ref={messagesEndRef} />
       </div>
 
+      {/* Suggested questions */}
+      <div className="flex flex-col justify-center bg-white border-t pt-2">
+        {suggestedQuestions.length > 0 && (
+          <>
+            <p className="px-2 text-sm text-gray-500 italic">Suggested questions - click to ask</p>
+            <div className="flex flex-wrap gap-1 px-4 py-2 ">
+              {suggestedQuestions.map((question, index) => (
+                <button
+                  key={index}
+                  onClick={() => handleSuggestedQuestion(question.text)}
+                  disabled={isLoading}
+                  className="px-3 py-1 text-sm text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-[6px] transition-colors duration-200 text-left"
+                >
+                  &quot; {question.text} &quot;
+                </button>
+              ))}
+            </div>
+          </>
+        )}
+      </div>
       <form onSubmit={handleSubmit} className="p-4 border-t bg-white">
         <div className="flex gap-2">
           <input
@@ -203,4 +307,4 @@ Guidelines:
       </form>
     </div>
   );
-} 
+};
