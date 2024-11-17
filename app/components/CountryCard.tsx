@@ -230,35 +230,23 @@ const CountryCard = ({ country = "Japan", onClose }: CountryCardProps) => {
     const otherCities = citiesData?.majorCities || [];
 
     return (
-      <div className="space-y-6 h-full">
+      <div className="space-y-6">
         {/* Capital City Card */}
-        {capital ? (
-          <div className="bg-white rounded-lg border p-4 hover:border-blue-200 transition-colors duration-200">
+        {capital && (
+          <div
+            onClick={() => setSelectedCity(capital.name)}
+            className="bg-white rounded-lg border p-4 hover:border-blue-200 transition-colors duration-200 cursor-pointer"
+          >
             <div className="flex justify-between items-start mb-2">
-              <h4 className="font-medium">{capital.name}</h4>
+              <div className="flex items-center gap-2">
+                <h4 className="font-medium">{capital.name}</h4>
+                <span className="px-2 py-0.5 text-xs bg-blue-100 text-blue-800 rounded-full">Capital</span>
+              </div>
               <span className="text-sm text-gray-500">{capital.population}</span>
             </div>
             <p className="text-sm text-gray-600 line-clamp-2">{capital.description}</p>
-            {selectedCity === capital.name ? (
-              <div className="mt-4">
-                <CityDetails city={capital} />
-                <button
-                  onClick={() => setSelectedCity(null)}
-                  className="mt-4 text-sm text-blue-500 hover:text-blue-600"
-                >
-                  Show less
-                </button>
-              </div>
-            ) : (
-              <button
-                onClick={() => setSelectedCity(capital.name)}
-                className="mt-2 text-sm text-blue-500 hover:text-blue-600"
-              >
-                Learn more
-              </button>
-            )}
           </div>
-        ) : null}
+        )}
 
         {/* Major Cities Grid */}
         <div>
@@ -267,87 +255,15 @@ const CountryCard = ({ country = "Japan", onClose }: CountryCardProps) => {
             {otherCities.map((city, index) => (
               <div
                 key={index}
-                className="bg-white rounded-lg border p-4 hover:border-blue-200 transition-colors duration-200"
+                onClick={() => setSelectedCity(city.name)}
+                className="bg-white rounded-lg border p-4 hover:border-blue-200 transition-colors duration-200 cursor-pointer"
               >
                 <div className="flex justify-between items-start mb-2">
                   <h4 className="font-medium">{city.name}</h4>
                   <span className="text-sm text-gray-500">{city.population}</span>
                 </div>
                 <p className="text-sm text-gray-600 line-clamp-2">{city.description}</p>
-                {selectedCity === city.name ? (
-                  <div className="mt-4">
-                    <CityDetails city={city} />
-                    <button
-                      onClick={() => setSelectedCity(null)}
-                      className="mt-4 text-sm text-blue-500 hover:text-blue-600"
-                    >
-                      Show less
-                    </button>
-                  </div>
-                ) : (
-                  <button
-                    onClick={() => setSelectedCity(city.name)}
-                    className="mt-2 text-sm text-blue-500 hover:text-blue-600"
-                  >
-                    Learn more
-                  </button>
-                )}
               </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    );
-  };
-
-  const renderCityDetail = () => {
-    const cityInfo = citiesData?.majorCities.find(c => c.name === selectedCity);
-    if (!cityInfo) return null;
-
-    return (
-      <div className="space-y-6">
-        <button
-          onClick={() => setSelectedCity(null)}
-          className="flex items-center text-sm text-gray-600 hover:text-gray-900"
-        >
-          <ChevronLeft size={16} />
-          <span>Back to cities</span>
-        </button>
-
-        <div>
-          <h2 className="text-xl font-semibold mb-2">{cityInfo.name}</h2>
-          <p className="text-sm text-gray-600 mb-6">{cityInfo.description}</p>
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <h3 className="font-semibold">Population</h3>
-            <p className="text-sm text-gray-600">{cityInfo.population}</p>
-          </div>
-          <div className="space-y-2">
-            <h3 className="font-semibold">Cost of Living</h3>
-            <p className="text-sm text-gray-600">{cityInfo.costOfLiving}</p>
-          </div>
-          <div className="space-y-2">
-            <h3 className="font-semibold">Internet Speed</h3>
-            <p className="text-sm text-gray-600">{cityInfo.internetSpeed}</p>
-          </div>
-          <div className="space-y-2">
-            <h3 className="font-semibold">Climate</h3>
-            <p className="text-sm text-gray-600">{cityInfo.climate}</p>
-          </div>
-        </div>
-
-        <div className="space-y-2">
-          <h3 className="font-semibold">Popular Neighborhoods</h3>
-          <div className="flex flex-wrap gap-2">
-            {cityInfo.neighborhoods.map((neighborhood: string) => (
-              <span
-                key={neighborhood}
-                className="px-2 py-1 bg-gray-100 rounded-[14px] text-sm text-gray-600"
-              >
-                {neighborhood}
-              </span>
             ))}
           </div>
         </div>
@@ -436,6 +352,31 @@ const CountryCard = ({ country = "Japan", onClose }: CountryCardProps) => {
                 {isTabLoading ? (
                   <div className="flex items-center justify-center h-full">
                     <div className="animate-spin rounded-[14px] h-8 w-8 border-b-2 border-gray-900" />
+                  </div>
+                ) : selectedCity ? (
+                  <div className="space-y-6">
+                    <button
+                      onClick={() => setSelectedCity(null)}
+                      className="flex items-center text-sm text-gray-600 hover:text-gray-900"
+                    >
+                      <ChevronLeft size={16} />
+                      <span>Back to cities</span>
+                    </button>
+                    {citiesData && (
+                      (() => {
+                        const cityData = citiesData.capital.name === selectedCity
+                          ? citiesData.capital
+                          : citiesData.majorCities.find(c => c.name === selectedCity);
+
+                        return cityData ? (
+                          <CityDetails city={cityData} />
+                        ) : (
+                          <div className="text-center text-gray-500">
+                            City information not found
+                          </div>
+                        );
+                      })()
+                    )}
                   </div>
                 ) : (
                   renderCityList()
@@ -786,7 +727,7 @@ const CountryCard = ({ country = "Japan", onClose }: CountryCardProps) => {
   );
 };
 
-// Add CityDetails component
+// Update CityDetails component with proper type checking
 const CityDetails = ({ city }: { city: CityData; }) => (
   <>
     <div className="flex justify-between items-start">
