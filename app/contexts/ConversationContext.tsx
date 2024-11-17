@@ -13,11 +13,12 @@ interface ConversationContextType {
   addMessage: (message: Message) => void;
   isLoading: boolean;
   setIsLoading: (loading: boolean) => void;
+  resetConversation: () => void;
 }
 
 const ConversationContext = createContext<ConversationContextType | undefined>(undefined);
 
-export function ConversationProvider({ children }: { children: ReactNode; }) {
+export const ConversationProvider = ({ children }: { children: React.ReactNode; }) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -25,17 +26,17 @@ export function ConversationProvider({ children }: { children: ReactNode; }) {
     setMessages(prev => [...prev, message]);
   };
 
+  const resetConversation = () => {
+    setMessages([]);
+    setIsLoading(false);
+  };
+
   return (
-    <ConversationContext.Provider value={{
-      messages,
-      addMessage,
-      isLoading,
-      setIsLoading
-    }}>
+    <ConversationContext.Provider value={{ messages, addMessage, isLoading, setIsLoading, resetConversation }}>
       {children}
     </ConversationContext.Provider>
   );
-}
+};
 
 export function useConversation() {
   const context = useContext(ConversationContext);

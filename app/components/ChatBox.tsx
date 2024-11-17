@@ -30,7 +30,7 @@ interface SuggestedQuestion {
 }
 
 export default function ChatBox({ country, countryData }: ChatBoxProps) {
-  const { messages, addMessage, isLoading, setIsLoading } = useConversation();
+  const { messages, addMessage, isLoading, setIsLoading, resetConversation } = useConversation();
   const [input, setInput] = useState('');
   const [suggestedQuestions, setSuggestedQuestions] = useState<SuggestedQuestion[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -117,7 +117,9 @@ export default function ChatBox({ country, countryData }: ChatBoxProps) {
   // Initialize conversation with generated response
   useEffect(() => {
     const initializeChat = async () => {
-      if (country && countryData && messages.length === 0) {
+      if (country && countryData) {
+        // Reset the conversation before initializing
+        resetConversation();
         setIsLoading(true);
 
         // Create detailed system prompt
@@ -190,7 +192,7 @@ Guidelines:
     };
 
     initializeChat();
-  }, [country, countryData, messages.length]);
+  }, [country, countryData]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

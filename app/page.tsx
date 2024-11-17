@@ -26,6 +26,7 @@ export default function Home() {
   const mapRef = useRef<any>(null);
   const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
   const [countryData, setCountryData] = useState<any>(null);
+  const [isConversationActive, setIsConversationActive] = useState(false);
 
   const handleFocusCountry = (countryName: string) => {
     if (mapRef.current) {
@@ -49,10 +50,10 @@ export default function Home() {
     if (!selectedCountry) return;
 
     try {
-      // Fetch all country data when chat is started
       const data = await getAllCountryData(selectedCountry);
       setCountryData(data);
       setIsChatVisible(true);
+      setIsConversationActive(true); // Set conversation as active
     } catch (error) {
       console.error('Failed to load country data:', error);
     }
@@ -137,19 +138,24 @@ export default function Home() {
                       onCountrySelect={setSelectedCountry}
                       selectedCountry={selectedCountry}
                     />
-                    <Button
-                      variant="secondary"
-                      size="icon"
-                      className="absolute top-4 left-4 z-10"
-                      onClick={() => setIsChatVisible(!isChatVisible)}
-                    >
-                      <PanelLeftOpen className="h-4 w-4" />
-                    </Button>
+                    {isConversationActive && ( // Only show when conversation is active
+                      <Button
+                        variant="secondary"
+                        size="icon"
+                        className="absolute top-4 left-4 z-10"
+                        onClick={() => setIsChatVisible(!isChatVisible)}
+                      >
+                        <PanelLeftOpen className="h-4 w-4" />
+                      </Button>
+                    )}
                     {!isChatVisible && selectedCountry && (
                       <div className="absolute right-4 top-4 w-[375px] bg-white rounded-lg border-2 border-gray-200 z-10 h-[600px] p-2">
                         <CountryCard
                           country={selectedCountry}
-                          onClose={() => setSelectedCountry(null)}
+                          onClose={() => {
+                            setSelectedCountry(null);
+                            setIsConversationActive(false); // Reset conversation state
+                          }}
                         />
                         <button
                           className="flex items-center gap-2 justify-center px-4 py-2 rounded-lg w-full translate-y-4 bg-sky-500 text-white hover:bg-sky-600"
