@@ -28,6 +28,9 @@ const Map = forwardRef(({ isChatVisible, onCountrySelect, selectedCountry }: Map
   const geocoderRef = useRef<MapboxGeocoder | null>(null);
   const [selectedCity, setSelectedCity] = useState<string | null>(null);
   const user = useUser();
+  const markerPositionRef = useRef<[number, number] | null>(null);
+  const lastSelectedCountryRef = useRef<string | null>(null);
+  const [showRecenterButton, setShowRecenterButton] = useState(false);
 
   const initializeGeocoder = useCallback((map: mapboxgl.Map) => {
     // Clear any existing geocoder
@@ -113,6 +116,13 @@ const Map = forwardRef(({ isChatVisible, onCountrySelect, selectedCountry }: Map
     map.on('load', () => {
       initializeGeocoder(map);
 
+      // Restore marker if position exists
+      if (markerPositionRef.current && !markerRef.current) {
+        markerRef.current = new mapboxgl.Marker()
+          .setLngLat(markerPositionRef.current)
+          .addTo(map);
+      }
+
       // Add click event handler for country selection
       map.on('click', async (e) => {
         const { lng, lat } = e.lngLat;
@@ -194,6 +204,11 @@ const Map = forwardRef(({ isChatVisible, onCountrySelect, selectedCountry }: Map
         mapRef.current.remove();
         mapRef.current = null;
       }
+
+      // Store marker position before cleanup
+      if (markerRef.current) {
+        markerPositionRef.current = (markerRef.current as mapboxgl.Marker).getLngLat().toArray() as [number, number];
+      }
     };
   }, [theme, initializeGeocoder, onCountrySelect]);
 
@@ -270,11 +285,124 @@ const Map = forwardRef(({ isChatVisible, onCountrySelect, selectedCountry }: Map
     }
   }, [theme]);
 
+  // Restore marker when chat visibility changes
+  useEffect(() => {
+    if (mapRef.current && markerPositionRef.current && !markerRef.current) {
+      markerRef.current = new mapboxgl.Marker()
+        .setLngLat(markerPositionRef.current)
+        .addTo(mapRef.current);
+    }
+  }, [isChatVisible]);
+
+  // Update marker position ref when marker changes
+  useEffect(() => {
+    if (markerRef.current) {
+      markerPositionRef.current = markerRef.current.getLngLat().toArray() as [number, number];
+    }
+  }, [selectedCountry]);
+
+  // Effect to handle chat visibility changes
+  useEffect(() => {
+    if (selectedCountry && mapRef.current && selectedCountry === lastSelectedCountryRef.current) {
+      const searchGeocoder = new MapboxGeocoder({
+        accessToken: mapboxgl.accessToken,
+        mapboxgl: mapboxgl as any,
+        marker: false,
+        types: 'country',
+        limit: 1
+      });
+
+      // Add the geocoder to the map temporarily
+      const container = document.createElement('div');
+      container.style.display = 'none';
+      document.body.appendChild(container);
+      container.appendChild(searchGeocoder.onAdd(mapRef.current));
+
+      // Set up the result handler before querying
+      searchGeocoder.on('result', (event) => {
+        const result = event.result;
+
+        mapRef.current?.flyTo({
+          center: result.center,
+          zoom: 5,
+          essential: true
+        });
+
+        if (markerRef.current) {
+          markerRef.current.setLngLat(result.center);
+        } else {
+          markerRef.current = new mapboxgl.Marker()
+            .setLngLat(result.center)
+            .addTo(mapRef.current!);
+        }
+
+        // Store the marker position
+        markerPositionRef.current = result.center;
+
+        // Clean up
+        container.remove();
+      });
+
+      // Handle errors
+      searchGeocoder.on('error', () => {
+        console.error('Failed to geocode country:', selectedCountry);
+        container.remove();
+      });
+
+      // Now perform the query
+      searchGeocoder.query(selectedCountry);
+    }
+    lastSelectedCountryRef.current = selectedCountry;
+  }, [isChatVisible, selectedCountry]);
+
+  // Add function to check if map has moved from marker
+  const checkMapMovement = useCallback(() => {
+    if (!mapRef.current || !markerRef.current) return;
+
+    const markerLngLat = markerRef.current.getLngLat() as mapboxgl.LngLat;
+    const mapCenter = mapRef.current.getCenter();
+    const mapZoom = mapRef.current.getZoom();
+
+    // Show button if map has moved more than 1 degree or zoom has changed significantly
+    const hasMovedSignificantly =
+      Math.abs(markerLngLat.lng - mapCenter.lng) > 1 ||
+      Math.abs(markerLngLat.lat - mapCenter.lat) > 1 ||
+      Math.abs(mapZoom - 5) > 0.5;
+
+    setShowRecenterButton(hasMovedSignificantly);
+  }, []);
+
+  // Add recenter function
+  const handleRecenter = useCallback(() => {
+    if (!mapRef.current || !markerRef.current) return;
+
+    const markerLngLat = markerRef.current.getLngLat() as mapboxgl.LngLat;
+    mapRef.current.flyTo({
+      center: [markerLngLat.lng, markerLngLat.lat],
+      zoom: 5,
+      essential: true
+    });
+  }, []);
+
+  // Add event listeners for map movement
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+
+    map.on('move', checkMapMovement);
+    map.on('zoom', checkMapMovement);
+
+    return () => {
+      map.off('move', checkMapMovement);
+      map.off('zoom', checkMapMovement);
+    };
+  }, [checkMapMovement]);
+
   return (
     <div className="relative h-full w-full overflow-hidden bg-black">
       <div id="map" className="absolute inset-0" />
 
-      {/* Search bar only */}
+      {/* Search bar */}
       {!isChatVisible && (
         <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10 border-2 border-gray-200 rounded-lg">
           <div className="flex items-center gap-2 bg-white p-2 rounded-lg">
@@ -284,6 +412,19 @@ const Map = forwardRef(({ isChatVisible, onCountrySelect, selectedCountry }: Map
             </div>
           </div>
         </div>
+      )}
+
+      {/* Recenter button */}
+      {showRecenterButton && selectedCountry && (
+        <Button
+          variant="secondary"
+          size="sm"
+          className={`absolute  right-4 z-10 shadow-lg flex items-center gap-2 ${isChatVisible ? 'top-4' : 'bottom-8'}`}
+          onClick={handleRecenter}
+        >
+          <Navigation className="h-4 w-4" />
+          <span>Recenter {selectedCountry}</span>
+        </Button>
       )}
     </div>
   );

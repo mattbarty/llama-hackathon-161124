@@ -40,7 +40,7 @@ export default function Home() {
         <ConversationProvider>
           <CountryDataProvider>
             <MapProvider onFocusCountry={handleFocusCountry}>
-              <div className="flex w-[calc(70%-2rem)] min-w-[800px] mx-auto min-h-[600px] h-[calc(80%-2rem)] gap-2 p-2 bg-white rounded-lg border-2 border-gray-200">
+              <div className="flex w-[calc(70%-2rem)] min-w-[800px] mx-auto min-h-[600px] h-[calc(85%)] gap-2 p-2 bg-white rounded-lg border-2 border-gray-200">
                 {/* Chat */}
                 <div className={`h-full transition-all duration-300 ease-in-out overflow-hidden relative ${isChatVisible ? 'w-3/5' : 'w-0'
                   }`}>
