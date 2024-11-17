@@ -250,7 +250,7 @@ Guidelines:
 
   // Add refresh handler for suggestions
   const handleRefreshSuggestions = async () => {
-    if (isRefreshingSuggestions || messages.length === 0) return;
+    if (isRefreshingSuggestions) return;
 
     setIsRefreshingSuggestions(true);
     const lastMessage = messages[messages.length - 1];
@@ -267,7 +267,9 @@ Guidelines:
             },
             {
               role: 'user',
-              content: `Previous response: "${lastMessage.content}". Suggest 3 new relevant follow-up questions about ${country}.`
+              content: lastMessage
+                ? `Previous response: "${lastMessage.content}". Suggest 3 new relevant follow-up questions about ${country}.`
+                : `Suggest 3 initial questions about ${country}.`
             }
           ],
           language: language
@@ -290,38 +292,23 @@ Guidelines:
   const renderSuggestionsContent = () => {
     if (!showSuggestions) return null;
 
-    if (isLoading || isRefreshingSuggestions) {
-      return (
-        <div className="px-4 pb-3">
-          <div className="flex items-center justify-center py-2">
-            <div className="animate-pulse text-sm text-gray-400">
-              Loading suggestions...
-            </div>
-          </div>
-        </div>
-      );
-    }
-
-    if (suggestedQuestions.length === 0) {
-      return (
-        <div className="px-4 pb-3">
-          <div className="flex items-center justify-center py-2">
-            <span className="text-sm text-gray-400">No suggestions available</span>
-          </div>
-        </div>
-      );
-    }
-
+    // Always show a container with refresh button
     return (
       <div className="px-4 pb-3">
         <div className="flex items-center justify-between mb-2">
-          <p className="text-sm text-gray-500 italic">Click to ask</p>
+          <p className="text-sm text-gray-500 italic">
+            {isLoading || isRefreshingSuggestions
+              ? "Loading suggestions..."
+              : suggestedQuestions.length === 0
+                ? "No suggestions available"
+                : "Click to ask"}
+          </p>
           <button
             onClick={handleRefreshSuggestions}
             disabled={isRefreshingSuggestions || isLoading}
             className={`p-1.5 rounded-full transition-colors duration-200 ${isRefreshingSuggestions || isLoading
-                ? 'text-gray-300 cursor-not-allowed'
-                : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'
+              ? 'text-gray-300 cursor-not-allowed'
+              : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'
               }`}
             title="Refresh suggestions"
           >
@@ -330,18 +317,22 @@ Guidelines:
             />
           </button>
         </div>
-        <div className="flex flex-wrap gap-1">
-          {suggestedQuestions.map((question, index) => (
-            <button
-              key={index}
-              onClick={() => handleSuggestedQuestion(question.text)}
-              disabled={isLoading || isRefreshingSuggestions}
-              className="px-3 py-1 text-sm text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-[6px] transition-colors duration-200 text-left"
-            >
-              &quot;{question.text}&quot;
-            </button>
-          ))}
-        </div>
+
+        {/* Only show questions if we have them */}
+        {suggestedQuestions.length > 0 && (
+          <div className="flex flex-wrap gap-1">
+            {suggestedQuestions.map((question, index) => (
+              <button
+                key={index}
+                onClick={() => handleSuggestedQuestion(question.text)}
+                disabled={isLoading || isRefreshingSuggestions}
+                className="px-3 py-1 text-sm text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-[6px] transition-colors duration-200 text-left"
+              >
+                &quot;{question.text}&quot;
+              </button>
+            ))}
+          </div>
+        )}
       </div>
     );
   };
