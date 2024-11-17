@@ -88,6 +88,31 @@ export async function POST(request: Request) {
           "commonChallenges": ["array of common challenges faced by expats"]
         }
       }`;
+		} else if (section === 'cities') {
+			prompt = `Generate comprehensive city information for ${country}. Respond with ONLY a JSON object in the following format, with no additional text or formatting:
+      {
+        "capital": {
+          "name": "string",
+          "isCapital": true,
+          "population": "string with population and year",
+          "description": "detailed string about the city",
+          "costOfLiving": "string with monthly cost range",
+          "internetSpeed": "string with average speeds",
+          "climate": "string describing climate",
+          "neighborhoods": ["array", "of", "popular", "neighborhoods"]
+        },
+        "majorCities": [
+          {
+            "name": "string",
+            "population": "string with population and year",
+            "description": "detailed string about the city",
+            "costOfLiving": "string with monthly cost range",
+            "internetSpeed": "string with average speeds",
+            "climate": "string describing climate",
+            "neighborhoods": ["array", "of", "popular", "neighborhoods"]
+          }
+        ]
+      }`;
 		} else {
 			return NextResponse.json({ error: 'Invalid section' }, { status: 400 });
 		}
@@ -153,6 +178,10 @@ export async function POST(request: Request) {
 					!generatedContent.expats
 				) {
 					throw new Error('Invalid culture response structure');
+				}
+			} else if (section === 'cities') {
+				if (!generatedContent.capital || !generatedContent.majorCities) {
+					throw new Error('Invalid cities response structure');
 				}
 			} else {
 				// Validate the legal response structure
@@ -244,6 +273,20 @@ export async function POST(request: Request) {
 						socialGroups: 'Information temporarily unavailable',
 						commonChallenges: ['Information unavailable'],
 					},
+				});
+			} else if (section === 'cities') {
+				return NextResponse.json({
+					capital: {
+						name: 'Information unavailable',
+						isCapital: true,
+						population: 'Information unavailable',
+						description: 'Information unavailable',
+						costOfLiving: 'Information unavailable',
+						internetSpeed: 'Information unavailable',
+						climate: 'Information unavailable',
+						neighborhoods: ['Information unavailable'],
+					},
+					majorCities: [],
 				});
 			} else {
 				// Return a legal fallback response

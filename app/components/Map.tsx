@@ -100,7 +100,7 @@ const Map = forwardRef(({ isChatVisible, onCountrySelect, selectedCountry }: Map
 
     const map = new mapboxgl.Map({
       container: 'map',
-      style: 'mapbox://styles/mapbox/dark-v11',
+      style: 'mapbox://styles/mapbox/light-v11',
       center: [0, 0],
       zoom: 2,
       projection: 'globe'

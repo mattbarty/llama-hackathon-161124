@@ -77,11 +77,28 @@ export interface CultureData {
   };
 }
 
+export interface CityData {
+  name: string;
+  isCapital?: boolean;
+  population: string;
+  description: string;
+  costOfLiving: string;
+  internetSpeed: string;
+  climate: string;
+  neighborhoods: string[];
+}
+
+export interface CitiesData {
+  capital: CityData;
+  majorCities: CityData[];
+}
+
 interface CountryData {
   legal?: LegalData;
   quality?: QualityData;
   work?: WorkData;
   culture?: CultureData;
+  cities?: CitiesData;
 }
 
 interface CountryDataContextType {
@@ -90,6 +107,7 @@ interface CountryDataContextType {
   getQualityData: (country: string) => Promise<QualityData>;
   getWorkData: (country: string) => Promise<WorkData>;
   getCultureData: (country: string) => Promise<CultureData>;
+  getCitiesData: (country: string) => Promise<CitiesData>;
   isLoading: boolean;
 }
 
@@ -247,6 +265,43 @@ export function CountryDataProvider({ children }: { children: ReactNode; }) {
     }
   };
 
+  const getCitiesData = async (country: string): Promise<CitiesData> => {
+    if (countryData[country]?.cities) {
+      return countryData[country].cities!;
+    }
+
+    setIsLoading(true);
+    try {
+      const response = await fetch('/api/generateCountryData', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          country,
+          section: 'cities'
+        }),
+      });
+
+      const data = await response.json();
+
+      setCountryData(prev => ({
+        ...prev,
+        [country]: {
+          ...prev[country],
+          cities: data
+        }
+      }));
+
+      return data;
+    } catch (error) {
+      console.error('Failed to generate cities data:', error);
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <CountryDataContext.Provider value={{
       countryData,
@@ -254,6 +309,7 @@ export function CountryDataProvider({ children }: { children: ReactNode; }) {
       getQualityData,
       getWorkData,
       getCultureData,
+      getCitiesData,
       isLoading
     }}>
       {children}

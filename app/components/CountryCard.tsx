@@ -4,7 +4,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Globe2, Building2, Heart, Briefcase, Users, Home, BookOpen, Scale, ChevronLeft, X, Star } from 'lucide-react';
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { CultureData, QualityData, useCountryData } from '@/app/contexts/CountryDataContext';
+import { CitiesData, CityData, CultureData, QualityData, useCountryData } from '@/app/contexts/CountryDataContext';
 import { LegalData, WorkData } from '@/app/contexts/CountryDataContext';
 
 interface CountryCardProps {
@@ -85,19 +85,20 @@ const cityData: Record<string, CityInfo[]> = {
 };
 
 const CountryCard = ({ country = "Japan", onClose }: CountryCardProps) => {
-  const { getLegalData, getQualityData, getWorkData, getCultureData, isLoading } = useCountryData();
+  const { getLegalData, getQualityData, getWorkData, getCultureData, getCitiesData, isLoading } = useCountryData();
   const [legalData, setLegalData] = useState<LegalData | null>(null);
   const [qualityData, setQualityData] = useState<QualityData | null>(null);
   const [workData, setWorkData] = useState<WorkData | null>(null);
   const [cultureData, setCultureData] = useState<CultureData | null>(null);
   const [activeTab, setActiveTab] = useState('living');
   const [selectedCity, setSelectedCity] = useState<string | null>(null);
-  const cities = cityData[country] || [];
+  const [citiesData, setCitiesData] = useState<CitiesData | null>(null);
   const [dataLoaded, setDataLoaded] = useState({
     legal: false,
     quality: false,
     work: false,
-    culture: false
+    culture: false,
+    cities: false
   });
 
   // Load data only when tab is selected
@@ -133,6 +134,13 @@ const CountryCard = ({ country = "Japan", onClose }: CountryCardProps) => {
               setDataLoaded(prev => ({ ...prev, culture: true }));
             }
             break;
+          case 'living':
+            if (!dataLoaded.cities) {
+              const data = await getCitiesData(country);
+              setCitiesData(data);
+              setDataLoaded(prev => ({ ...prev, cities: true }));
+            }
+            break;
         }
       } catch (error) {
         console.error(`Failed to load ${activeTab} data:`, error);
@@ -140,7 +148,7 @@ const CountryCard = ({ country = "Japan", onClose }: CountryCardProps) => {
     };
 
     loadData();
-  }, [activeTab, country, getLegalData, getQualityData, getWorkData, getCultureData, dataLoaded]);
+  }, [activeTab, country, dataLoaded]);
 
   // Reset loaded state when country changes
   useEffect(() => {
@@ -148,13 +156,14 @@ const CountryCard = ({ country = "Japan", onClose }: CountryCardProps) => {
       legal: false,
       quality: false,
       work: false,
-      culture: false
+      culture: false,
+      cities: false
     });
   }, [country]);
 
   const renderCityList = () => {
-    const capital = cities.find(city => city.isCapital);
-    const otherCities = cities.filter(city => !city.isCapital);
+    const capital = citiesData?.capital;
+    const otherCities = citiesData?.majorCities || [];
 
     return (
       <div className="space-y-6 h-full">
@@ -243,7 +252,7 @@ const CountryCard = ({ country = "Japan", onClose }: CountryCardProps) => {
   };
 
   const renderCityDetail = () => {
-    const cityInfo = cities.find(c => c.name === selectedCity);
+    const cityInfo = citiesData?.majorCities.find(c => c.name === selectedCity);
     if (!cityInfo) return null;
 
     return (
@@ -338,8 +347,76 @@ const CountryCard = ({ country = "Japan", onClose }: CountryCardProps) => {
         <div className="flex-1 min-h-0">
           <TabsContent value="living" className="h-full data-[state=active]:flex flex-col">
             <ScrollArea className="flex-1">
-              <div className="space-y-4 px-4 py-2">
-                {selectedCity ? renderCityDetail() : renderCityList()}
+              <div className="space-y-6 px-4 py-2">
+                {isLoading ? (
+                  <div className="flex items-center justify-center h-full">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900" />
+                  </div>
+                ) : citiesData ? (
+                  <>
+                    {selectedCity ? (
+                      <>
+                        <div className="flex items-center gap-2 mb-6">
+                          <button
+                            onClick={() => setSelectedCity(null)}
+                            className="flex items-center text-sm text-blue-600 hover:text-blue-800"
+                          >
+                            <ChevronLeft className="h-4 w-4" />
+                            Back to cities
+                          </button>
+                        </div>
+                        <div className="space-y-4">
+                          {selectedCity === citiesData.capital.name ? (
+                            <CityDetails city={citiesData.capital} />
+                          ) : (
+                            <CityDetails
+                              city={citiesData.majorCities.find(city => city.name === selectedCity)!}
+                            />
+                          )}
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <div className="space-y-4">
+                          <h3 className="font-semibold text-lg">Capital City</h3>
+                          <div
+                            className="p-4 rounded-lg border hover:border-blue-500 cursor-pointer transition-colors"
+                            onClick={() => setSelectedCity(citiesData.capital.name)}
+                          >
+                            <div className="flex justify-between items-start mb-2">
+                              <h4 className="font-medium">{citiesData.capital.name}</h4>
+                              <span className="text-sm text-gray-500">{citiesData.capital.population}</span>
+                            </div>
+                            <p className="text-sm text-gray-600 line-clamp-2">{citiesData.capital.description}</p>
+                          </div>
+                        </div>
+
+                        <div className="space-y-4">
+                          <h3 className="font-semibold text-lg">Major Cities</h3>
+                          <div className="space-y-3">
+                            {citiesData.majorCities.map((city, index) => (
+                              <div
+                                key={index}
+                                className="p-4 rounded-lg border hover:border-blue-500 cursor-pointer transition-colors"
+                                onClick={() => setSelectedCity(city.name)}
+                              >
+                                <div className="flex justify-between items-start mb-2">
+                                  <h4 className="font-medium">{city.name}</h4>
+                                  <span className="text-sm text-gray-500">{city.population}</span>
+                                </div>
+                                <p className="text-sm text-gray-600 line-clamp-2">{city.description}</p>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </>
+                    )}
+                  </>
+                ) : (
+                  <div className="text-center text-gray-500">
+                    Failed to load city information
+                  </div>
+                )}
               </div>
             </ScrollArea>
           </TabsContent>
@@ -685,5 +762,49 @@ const CountryCard = ({ country = "Japan", onClose }: CountryCardProps) => {
     </div>
   );
 };
+
+// Add CityDetails component
+const CityDetails = ({ city }: { city: CityData; }) => (
+  <>
+    <div className="flex justify-between items-start">
+      <h2 className="text-xl font-semibold">{city.name}</h2>
+      <span className="text-sm text-gray-500">{city.population}</span>
+    </div>
+
+    <div className="space-y-4">
+      <p className="text-gray-600">{city.description}</p>
+
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <h4 className="font-medium mb-2">Cost of Living</h4>
+          <p className="text-sm text-gray-600">{city.costOfLiving}</p>
+        </div>
+        <div>
+          <h4 className="font-medium mb-2">Internet Speed</h4>
+          <p className="text-sm text-gray-600">{city.internetSpeed}</p>
+        </div>
+      </div>
+
+      <div>
+        <h4 className="font-medium mb-2">Climate</h4>
+        <p className="text-sm text-gray-600">{city.climate}</p>
+      </div>
+
+      <div>
+        <h4 className="font-medium mb-2">Popular Neighborhoods</h4>
+        <div className="flex flex-wrap gap-2">
+          {city.neighborhoods.map((neighborhood: string, index: number) => (
+            <span
+              key={index}
+              className="px-3 py-1 bg-gray-100 rounded-full text-sm text-gray-700"
+            >
+              {neighborhood}
+            </span>
+          ))}
+        </div>
+      </div>
+    </div>
+  </>
+);
 
 export default CountryCard;

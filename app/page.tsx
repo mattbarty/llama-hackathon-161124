@@ -110,7 +110,7 @@ export default function Home() {
                       <PanelLeftOpen className="h-4 w-4" />
                     </Button>
                     {selectedCountry && (
-                      <div className="absolute right-4 top-20 w-[400px] bg-white rounded-lg border-2 border-gray-200 z-10 h-[600px]">
+                      <div className="absolute right-4 top-20 w-[350px] bg-white rounded-lg border-2 border-gray-200 z-10 h-[600px]">
                         <CountryCard
                           country={selectedCountry}
                           onClose={() => setSelectedCountry(null)}
