@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Globe2 } from 'lucide-react';
+import { Compass, Globe2 } from 'lucide-react';
 
 export function InitialOverlay() {
   const [isVisible, setIsVisible] = useState(true);
@@ -42,8 +42,8 @@ export function InitialOverlay() {
             transition={{ delay: 0.1 }}
             className="text-center text-white p-8 rounded-lg max-w-md"
           >
-            <Globe2 className="h-16 w-16 mx-auto mb-6 animate-pulse" />
-            <h2 className="text-2xl font-semibold mb-4">Welcome to Little Expat</h2>
+            <Compass className="h-16 w-16 mx-auto mb-6" />
+            <h2 className="text-2xl font-semibold mb-4">Welcome to LlamaXpat</h2>
             <p className="text-xl opacity-90">
               Click on any country to begin your journey
             </p>
