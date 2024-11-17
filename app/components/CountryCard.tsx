@@ -93,6 +93,7 @@ const CountryCard = ({ country = "Japan", onClose }: CountryCardProps) => {
   const [activeTab, setActiveTab] = useState('living');
   const [selectedCity, setSelectedCity] = useState<string | null>(null);
   const [citiesData, setCitiesData] = useState<CitiesData | null>(null);
+  const [isTabLoading, setIsTabLoading] = useState(false);
   const [dataLoaded, setDataLoaded] = useState({
     legal: false,
     quality: false,
@@ -105,6 +106,7 @@ const CountryCard = ({ country = "Japan", onClose }: CountryCardProps) => {
   useEffect(() => {
     const loadData = async () => {
       try {
+        setIsTabLoading(true); // Set loading state when starting
         switch (activeTab) {
           case 'immigration':
             if (!dataLoaded.legal) {
@@ -144,6 +146,8 @@ const CountryCard = ({ country = "Japan", onClose }: CountryCardProps) => {
         }
       } catch (error) {
         console.error(`Failed to load ${activeTab} data:`, error);
+      } finally {
+        setIsTabLoading(false); // Clear loading state when done
       }
     };
 
@@ -331,23 +335,43 @@ const CountryCard = ({ country = "Japan", onClose }: CountryCardProps) => {
       {/* Tabs */}
       <Tabs defaultValue="living" className="flex-1 flex flex-col min-h-0" onValueChange={setActiveTab}>
         <TabsList className="grid w-full grid-cols-5 bg-gray-50 h-auto flex-shrink-0">
-          <TabsTrigger value="living" className="flex flex-col items-center p-2">
+          <TabsTrigger
+            value="living"
+            className="flex flex-col items-center p-2"
+            disabled={isTabLoading}
+          >
             <Building2 size={16} />
             <span className="text-xs mt-1">Cities</span>
           </TabsTrigger>
-          <TabsTrigger value="immigration" className="flex flex-col items-center p-2">
+          <TabsTrigger
+            value="immigration"
+            className="flex flex-col items-center p-2"
+            disabled={isTabLoading}
+          >
             <Scale size={16} />
             <span className="text-xs mt-1">Legal</span>
           </TabsTrigger>
-          <TabsTrigger value="quality" className="flex flex-col items-center p-2">
+          <TabsTrigger
+            value="quality"
+            className="flex flex-col items-center p-2"
+            disabled={isTabLoading}
+          >
             <Heart size={16} />
             <span className="text-xs mt-1">Quality</span>
           </TabsTrigger>
-          <TabsTrigger value="work" className="flex flex-col items-center p-2">
+          <TabsTrigger
+            value="work"
+            className="flex flex-col items-center p-2"
+            disabled={isTabLoading}
+          >
             <Briefcase size={16} />
             <span className="text-xs mt-1">Work</span>
           </TabsTrigger>
-          <TabsTrigger value="culture" className="flex flex-col items-center p-2">
+          <TabsTrigger
+            value="culture"
+            className="flex flex-col items-center p-2"
+            disabled={isTabLoading}
+          >
             <Users size={16} />
             <span className="text-xs mt-1">Culture</span>
           </TabsTrigger>
