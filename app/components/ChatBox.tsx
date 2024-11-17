@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Send, RefreshCw } from 'lucide-react';
+import { Send, RefreshCw, ChevronUp, ChevronDown } from 'lucide-react';
 import InteractiveMessage from './InteractiveMessage';
 import { useConversation } from '../contexts/ConversationContext';
 import { CitiesData, WorkData, LegalData, QualityData, CultureData } from '../contexts/CountryDataContext';
@@ -44,6 +44,7 @@ export default function ChatBox({ country, countryData }: ChatBoxProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { language } = useLanguage();
   const [isRefreshingSuggestions, setIsRefreshingSuggestions] = useState(false);
+  const [showSuggestions, setShowSuggestions] = useState(true);
 
   // Function to fetch suggested questions
   const fetchSuggestedQuestions = async (lastResponse: string) => {
@@ -286,6 +287,65 @@ Guidelines:
     }
   };
 
+  const renderSuggestionsContent = () => {
+    if (!showSuggestions) return null;
+
+    if (isLoading || isRefreshingSuggestions) {
+      return (
+        <div className="px-4 pb-3">
+          <div className="flex items-center justify-center py-2">
+            <div className="animate-pulse text-sm text-gray-400">
+              Loading suggestions...
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    if (suggestedQuestions.length === 0) {
+      return (
+        <div className="px-4 pb-3">
+          <div className="flex items-center justify-center py-2">
+            <span className="text-sm text-gray-400">No suggestions available</span>
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div className="px-4 pb-3">
+        <div className="flex items-center justify-between mb-2">
+          <p className="text-sm text-gray-500 italic">Click to ask</p>
+          <button
+            onClick={handleRefreshSuggestions}
+            disabled={isRefreshingSuggestions || isLoading}
+            className={`p-1.5 rounded-full transition-colors duration-200 ${isRefreshingSuggestions || isLoading
+                ? 'text-gray-300 cursor-not-allowed'
+                : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'
+              }`}
+            title="Refresh suggestions"
+          >
+            <RefreshCw
+              className={`h-3.5 w-3.5 ${isRefreshingSuggestions ? 'animate-spin' : ''}`}
+            />
+          </button>
+        </div>
+        <div className="flex flex-wrap gap-1">
+          {suggestedQuestions.map((question, index) => (
+            <button
+              key={index}
+              onClick={() => handleSuggestedQuestion(question.text)}
+              disabled={isLoading || isRefreshingSuggestions}
+              className="px-3 py-1 text-sm text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-[6px] transition-colors duration-200 text-left"
+            >
+              &quot;{question.text}&quot;
+            </button>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="flex flex-col h-full bg-gray-50">
       <div className="flex items-center justify-between px-4 py-2 bg-white border-b">
@@ -333,41 +393,29 @@ Guidelines:
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Suggested questions with refresh button */}
-      <div className="flex flex-col justify-center bg-white border-t pt-2">
-        {suggestedQuestions.length > 0 && (
-          <>
-            <div className="flex items-center justify-between px-2">
-              <p className="text-sm text-gray-500 italic">Suggested questions - click to ask</p>
-              <button
-                onClick={handleRefreshSuggestions}
-                disabled={isRefreshingSuggestions || isLoading}
-                className={`p-1.5 rounded-full transition-colors duration-200 ${isRefreshingSuggestions || isLoading
-                    ? 'text-gray-300 cursor-not-allowed'
-                    : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'
-                  }`}
-                title="Refresh suggestions"
-              >
-                <RefreshCw
-                  className={`h-3.5 w-3.5 ${isRefreshingSuggestions ? 'animate-spin' : ''}`}
-                />
-              </button>
-            </div>
-            <div className="flex flex-wrap gap-1 px-4 py-2">
-              {suggestedQuestions.map((question, index) => (
-                <button
-                  key={index}
-                  onClick={() => handleSuggestedQuestion(question.text)}
-                  disabled={isLoading || isRefreshingSuggestions}
-                  className="px-3 py-1 text-sm text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-[6px] transition-colors duration-200 text-left"
-                >
-                  &quot;{question.text}&quot;
-                </button>
-              ))}
-            </div>
-          </>
-        )}
+      {/* Always show suggestions section */}
+      <div className="bg-white border-t">
+        <button
+          onClick={() => setShowSuggestions(!showSuggestions)}
+          className="w-full flex items-center justify-between px-4 py-2 text-sm text-gray-500 hover:bg-gray-50"
+        >
+          <div className="flex items-center gap-2">
+            <span className="italic">Suggested questions</span>
+            {!showSuggestions && suggestedQuestions.length > 0 && (
+              <span className="text-xs text-gray-400">
+                ({suggestedQuestions.length} available)
+              </span>
+            )}
+          </div>
+          {showSuggestions ? (
+            <ChevronUp className="h-4 w-4" />
+          ) : (
+            <ChevronDown className="h-4 w-4" />
+          )}
+        </button>
+        {renderSuggestionsContent()}
       </div>
+
       <form onSubmit={handleSubmit} className="p-4 border-t bg-white">
         <div className="flex gap-2">
           <input
