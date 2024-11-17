@@ -8,7 +8,7 @@ import InteractiveMessage from './InteractiveMessage';
 import { useConversation } from '../contexts/ConversationContext';
 import { CitiesData, WorkData, LegalData, QualityData, CultureData } from '../contexts/CountryDataContext';
 import ReactMarkdown from 'react-markdown';
-
+import { useLanguage } from '../contexts/LanguageContext';
 interface Message {
   role: 'user' | 'assistant';
   content: string;
@@ -34,6 +34,7 @@ export default function ChatBox({ country, countryData }: ChatBoxProps) {
   const [input, setInput] = useState('');
   const [suggestedQuestions, setSuggestedQuestions] = useState<SuggestedQuestion[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const { language } = useLanguage();
 
   // Function to fetch suggested questions
   const fetchSuggestedQuestions = async (lastResponse: string) => {
@@ -51,7 +52,8 @@ export default function ChatBox({ country, countryData }: ChatBoxProps) {
               role: 'user',
               content: `Previous response: "${lastResponse}". Suggest 3 relevant follow-up questions about ${country}.`
             }
-          ]
+          ],
+          language: language
         }),
       });
 
@@ -92,7 +94,8 @@ export default function ChatBox({ country, countryData }: ChatBoxProps) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          messages: messages.concat(userMessage)
+          messages: messages.concat(userMessage),
+          language: language
         }),
       });
 
@@ -163,7 +166,8 @@ Guidelines:
                   role: 'user',
                   content: `Give a brief, friendly welcome message for ${country}. Keep it to 2-3 sentences maximum.`
                 }
-              ]
+              ],
+              language: language
             }),
           });
 
@@ -210,7 +214,8 @@ Guidelines:
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          messages: messages.concat(userMessage)
+          messages: messages.concat(userMessage),
+          language: language
         }),
       });
 

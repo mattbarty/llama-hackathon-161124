@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useState, useEffect } from 'react';
 
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
@@ -6,6 +8,7 @@ import { Globe2, Building2, Heart, Briefcase, Users, Home, BookOpen, Scale, Chev
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { CitiesData, CityData, CultureData, QualityData, useCountryData } from '@/app/contexts/CountryDataContext';
 import { LegalData, WorkData } from '@/app/contexts/CountryDataContext';
+import { useLanguage } from '@/app/contexts/LanguageContext';
 
 interface CountryCardProps {
   country: string;
@@ -101,6 +104,7 @@ const CountryCard = ({ country = "Japan", onClose }: CountryCardProps) => {
     culture: false,
     cities: false
   });
+  const { language } = useLanguage();
 
   // Load data only when tab is selected
   useEffect(() => {

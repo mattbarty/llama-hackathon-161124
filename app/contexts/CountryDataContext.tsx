@@ -1,6 +1,7 @@
 'use client';
 
 import { createContext, useContext, useState, ReactNode } from 'react';
+import { useLanguage } from './LanguageContext';
 
 export interface LegalData {
   visaRequirements: string;
@@ -123,6 +124,7 @@ const CountryDataContext = createContext<CountryDataContextType | undefined>(und
 export function CountryDataProvider({ children }: { children: ReactNode; }) {
   const [countryData, setCountryData] = useState<Record<string, CountryData>>({});
   const [isLoading, setIsLoading] = useState(false);
+  const { language } = useLanguage();
 
   const getLegalData = async (country: string): Promise<LegalData> => {
     if (countryData[country]?.legal) {
@@ -138,7 +140,8 @@ export function CountryDataProvider({ children }: { children: ReactNode; }) {
         },
         body: JSON.stringify({
           country,
-          section: 'legal'
+          section: 'legal',
+          language: language
         }),
       });
 
@@ -175,7 +178,8 @@ export function CountryDataProvider({ children }: { children: ReactNode; }) {
         },
         body: JSON.stringify({
           country,
-          section: 'quality'
+          section: 'quality',
+          language: language
         }),
       });
 
@@ -212,7 +216,8 @@ export function CountryDataProvider({ children }: { children: ReactNode; }) {
         },
         body: JSON.stringify({
           country,
-          section: 'work'
+          section: 'work',
+          language: language
         }),
       });
 
@@ -249,7 +254,8 @@ export function CountryDataProvider({ children }: { children: ReactNode; }) {
         },
         body: JSON.stringify({
           country,
-          section: 'culture'
+          section: 'culture',
+          language: language
         }),
       });
 
@@ -286,7 +292,8 @@ export function CountryDataProvider({ children }: { children: ReactNode; }) {
         },
         body: JSON.stringify({
           country,
-          section: 'cities'
+          section: 'cities',
+          language: language
         }),
       });
 
@@ -310,34 +317,35 @@ export function CountryDataProvider({ children }: { children: ReactNode; }) {
   };
 
   const getAllCountryData = async (country: string) => {
-    setIsLoading(true);
+    const sections = ['legal', 'quality', 'work', 'culture', 'cities'];
+    const data: any = {};
+
     try {
-      const [legal, quality, work, culture, cities] = await Promise.all([
-        getLegalData(country),
-        getQualityData(country),
-        getWorkData(country),
-        getCultureData(country),
-        getCitiesData(country)
-      ]);
+      const promises = sections.map(async (section) => {
+        const response = await fetch('/api/generateCountryData', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            country,
+            section,
+            language: language
+          }),
+        });
+
+        const result = await response.json();
+        data[section] = result;
+      });
+
+      await Promise.all(promises);
 
       setCountryData(prev => ({
         ...prev,
-        [country]: {
-          legal,
-          quality,
-          work,
-          culture,
-          cities
-        }
+        [country]: data
       }));
 
-      return {
-        legal,
-        quality,
-        work,
-        culture,
-        cities
-      };
+      return data;
     } catch (error) {
       console.error('Failed to load all country data:', error);
       throw error;

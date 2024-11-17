@@ -11,10 +11,15 @@ interface ChatMessage {
 
 export async function POST(request: Request) {
 	try {
-		const { messages } = await request.json();
+		const { messages, language } = await request.json();
+
+		const systemMessage = {
+			role: 'system',
+			content: `You are a helpful assistant that responds in ${language}. Please provide all responses in ${language}.`,
+		};
 
 		const chatCompletion = await groq.chat.completions.create({
-			messages: messages as ChatMessage[],
+			messages: [systemMessage, ...messages] as ChatMessage[],
 			model: 'llama-3.2-3b-preview',
 			temperature: 0.7,
 			max_tokens: 4096,
