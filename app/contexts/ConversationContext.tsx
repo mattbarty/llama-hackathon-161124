@@ -14,6 +14,8 @@ interface ConversationContextType {
   isLoading: boolean;
   setIsLoading: (loading: boolean) => void;
   resetConversation: () => void;
+  currentCountry: string | null;
+  setCurrentCountry: (country: string | null) => void;
 }
 
 const ConversationContext = createContext<ConversationContextType | undefined>(undefined);
@@ -21,6 +23,7 @@ const ConversationContext = createContext<ConversationContextType | undefined>(u
 export const ConversationProvider = ({ children }: { children: React.ReactNode; }) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [currentCountry, setCurrentCountry] = useState<string | null>(null);
 
   const addMessage = (message: Message) => {
     setMessages(prev => [...prev, message]);
@@ -29,10 +32,19 @@ export const ConversationProvider = ({ children }: { children: React.ReactNode; 
   const resetConversation = () => {
     setMessages([]);
     setIsLoading(false);
+    setCurrentCountry(null);
   };
 
   return (
-    <ConversationContext.Provider value={{ messages, addMessage, isLoading, setIsLoading, resetConversation }}>
+    <ConversationContext.Provider value={{
+      messages,
+      addMessage,
+      isLoading,
+      setIsLoading,
+      resetConversation,
+      currentCountry,
+      setCurrentCountry
+    }}>
       {children}
     </ConversationContext.Provider>
   );

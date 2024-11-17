@@ -14,6 +14,7 @@ import { UserProfile } from "./UserProfile";
 import { useUser } from '@/app/contexts/UserContext';
 import CountryCard from '@/app/components/CountryCard';
 import { useTheme } from "@/app/contexts/ThemeContext";
+import { useLanguage } from '@/app/contexts/LanguageContext';
 
 interface MapProps {
   isChatVisible: boolean;
@@ -31,6 +32,7 @@ const Map = forwardRef(({ isChatVisible, onCountrySelect, selectedCountry }: Map
   const markerPositionRef = useRef<[number, number] | null>(null);
   const lastSelectedCountryRef = useRef<string | null>(null);
   const [showRecenterButton, setShowRecenterButton] = useState(false);
+  const { language } = useLanguage();
 
   const initializeGeocoder = useCallback((map: mapboxgl.Map) => {
     // Clear any existing geocoder
@@ -397,6 +399,12 @@ const Map = forwardRef(({ isChatVisible, onCountrySelect, selectedCountry }: Map
       map.off('zoom', checkMapMovement);
     };
   }, [checkMapMovement]);
+
+  // Update any API calls to include language parameter
+  const handleCountryClick = async (country: string) => {
+    // If you have any API calls here, update them to include language
+    onCountrySelect(country);
+  };
 
   return (
     <div className="relative h-full w-full overflow-hidden bg-black">

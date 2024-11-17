@@ -3,12 +3,12 @@
 import { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Send } from 'lucide-react';
+import { Send, RefreshCw, ChevronUp, ChevronDown } from 'lucide-react';
 import InteractiveMessage from './InteractiveMessage';
 import { useConversation } from '../contexts/ConversationContext';
 import { CitiesData, WorkData, LegalData, QualityData, CultureData } from '../contexts/CountryDataContext';
 import ReactMarkdown from 'react-markdown';
-
+import { useLanguage } from '../contexts/LanguageContext';
 interface Message {
   role: 'user' | 'assistant';
   content: string;
@@ -30,10 +30,21 @@ interface SuggestedQuestion {
 }
 
 export default function ChatBox({ country, countryData }: ChatBoxProps) {
-  const { messages, addMessage, isLoading, setIsLoading, resetConversation } = useConversation();
+  const {
+    messages,
+    addMessage,
+    isLoading,
+    setIsLoading,
+    resetConversation,
+    currentCountry,
+    setCurrentCountry
+  } = useConversation();
   const [input, setInput] = useState('');
   const [suggestedQuestions, setSuggestedQuestions] = useState<SuggestedQuestion[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const { language } = useLanguage();
+  const [isRefreshingSuggestions, setIsRefreshingSuggestions] = useState(false);
+  const [showSuggestions, setShowSuggestions] = useState(true);
 
   // Function to fetch suggested questions
   const fetchSuggestedQuestions = async (lastResponse: string) => {
@@ -51,7 +62,8 @@ export default function ChatBox({ country, countryData }: ChatBoxProps) {
               role: 'user',
               content: `Previous response: "${lastResponse}". Suggest 3 relevant follow-up questions about ${country}.`
             }
-          ]
+          ],
+          language: language
         }),
       });
 
@@ -92,7 +104,8 @@ export default function ChatBox({ country, countryData }: ChatBoxProps) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          messages: messages.concat(userMessage)
+          messages: messages.concat(userMessage),
+          language: language
         }),
       });
 
@@ -117,10 +130,9 @@ export default function ChatBox({ country, countryData }: ChatBoxProps) {
   // Initialize conversation with generated response
   useEffect(() => {
     const initializeChat = async () => {
-      if (country && countryData) {
-        // Reset the conversation before initializing
-        resetConversation();
+      if (country && countryData && messages.length === 0 && !isLoading) {
         setIsLoading(true);
+        setCurrentCountry(country);
 
         // Create detailed system prompt
         const systemPrompt = {
@@ -153,6 +165,9 @@ Guidelines:
         };
 
         try {
+          // Add the system prompt first
+          addMessage(systemPrompt as Message);
+
           const response = await fetch('/api/callGroq', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -163,16 +178,14 @@ Guidelines:
                   role: 'user',
                   content: `Give a brief, friendly welcome message for ${country}. Keep it to 2-3 sentences maximum.`
                 }
-              ]
+              ],
+              language: language
             }),
           });
 
           const data = await response.json();
-
           if (data.error) throw new Error(data.error);
 
-          // Add both messages in sequence
-          addMessage(systemPrompt as Message);
           addMessage({
             role: 'assistant',
             content: data.message
@@ -180,7 +193,6 @@ Guidelines:
         } catch (error) {
           console.error('Failed to initialize chat:', error);
           // Fallback welcome message
-          addMessage(systemPrompt as Message);
           addMessage({
             role: 'assistant',
             content: `**Welcome!** 👋 I'm here to help you learn about ${country}. What would you like to know?`
@@ -192,7 +204,7 @@ Guidelines:
     };
 
     initializeChat();
-  }, [country, countryData]);
+  }, [country, countryData, messages.length, addMessage, language, isLoading]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -210,7 +222,8 @@ Guidelines:
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          messages: messages.concat(userMessage)
+          messages: messages.concat(userMessage),
+          language: language
         }),
       });
 
@@ -235,15 +248,127 @@ Guidelines:
     }
   };
 
+  // Add refresh handler for suggestions
+  const handleRefreshSuggestions = async () => {
+    if (isRefreshingSuggestions || messages.length === 0) return;
+
+    setIsRefreshingSuggestions(true);
+    const lastMessage = messages[messages.length - 1];
+
+    try {
+      const response = await fetch('/api/callGroq', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messages: [
+            {
+              role: 'system',
+              content: 'You are a helpful assistant. Based on the previous response and available country data, suggest 3 different relevant follow-up questions. Return ONLY a JSON array of questions, no other text. Format: ["question1", "question2", "question3"]'
+            },
+            {
+              role: 'user',
+              content: `Previous response: "${lastMessage.content}". Suggest 3 new relevant follow-up questions about ${country}.`
+            }
+          ],
+          language: language
+        }),
+      });
+
+      const data = await response.json();
+      if (data.error) throw new Error(data.error);
+
+      const questions = JSON.parse(data.message);
+      setSuggestedQuestions(questions.map((text: string) => ({ text })));
+    } catch (error) {
+      console.error('Failed to refresh suggested questions:', error);
+      setSuggestedQuestions([]);
+    } finally {
+      setIsRefreshingSuggestions(false);
+    }
+  };
+
+  const renderSuggestionsContent = () => {
+    if (!showSuggestions) return null;
+
+    if (isLoading || isRefreshingSuggestions) {
+      return (
+        <div className="px-4 pb-3">
+          <div className="flex items-center justify-center py-2">
+            <div className="animate-pulse text-sm text-gray-400">
+              Loading suggestions...
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    if (suggestedQuestions.length === 0) {
+      return (
+        <div className="px-4 pb-3">
+          <div className="flex items-center justify-center py-2">
+            <span className="text-sm text-gray-400">No suggestions available</span>
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div className="px-4 pb-3">
+        <div className="flex items-center justify-between mb-2">
+          <p className="text-sm text-gray-500 italic">Click to ask</p>
+          <button
+            onClick={handleRefreshSuggestions}
+            disabled={isRefreshingSuggestions || isLoading}
+            className={`p-1.5 rounded-full transition-colors duration-200 ${isRefreshingSuggestions || isLoading
+                ? 'text-gray-300 cursor-not-allowed'
+                : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'
+              }`}
+            title="Refresh suggestions"
+          >
+            <RefreshCw
+              className={`h-3.5 w-3.5 ${isRefreshingSuggestions ? 'animate-spin' : ''}`}
+            />
+          </button>
+        </div>
+        <div className="flex flex-wrap gap-1">
+          {suggestedQuestions.map((question, index) => (
+            <button
+              key={index}
+              onClick={() => handleSuggestedQuestion(question.text)}
+              disabled={isLoading || isRefreshingSuggestions}
+              className="px-3 py-1 text-sm text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-[6px] transition-colors duration-200 text-left"
+            >
+              &quot;{question.text}&quot;
+            </button>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="flex flex-col h-full bg-gray-50">
+      <div className="flex items-center justify-between px-4 py-2 bg-white border-b">
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-gray-500">Chatting about:</span>
+          <span className="px-2 py-1 text-sm font-medium bg-blue-100 text-blue-800 rounded-[14px]">
+            {country || currentCountry}
+          </span>
+        </div>
+        <button
+          onClick={resetConversation}
+          className="text-sm text-gray-500 hover:text-gray-700 px-2 py-1 rounded-md hover:bg-gray-100"
+        >
+          Reset Chat
+        </button>
+      </div>
+
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {messages.map((message, index) => {
-          console.log(index);
-          // Skip system messages
+          // Only skip system messages, show all other messages
           if (message.role === 'system') return null;
-          // Skip welcome message
-          if (index === 1) return null;
+          if (index === 2 && message.role === 'assistant') return null;
+          console.log(message, index);
 
           return (
             <div
@@ -268,26 +393,29 @@ Guidelines:
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Suggested questions */}
-      <div className="flex flex-col justify-center bg-white border-t pt-2">
-        {suggestedQuestions.length > 0 && (
-          <>
-            <p className="px-2 text-sm text-gray-500 italic">Suggested questions - click to ask</p>
-            <div className="flex flex-wrap gap-1 px-4 py-2 ">
-              {suggestedQuestions.map((question, index) => (
-                <button
-                  key={index}
-                  onClick={() => handleSuggestedQuestion(question.text)}
-                  disabled={isLoading}
-                  className="px-3 py-1 text-sm text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-[6px] transition-colors duration-200 text-left"
-                >
-                  &quot; {question.text} &quot;
-                </button>
-              ))}
-            </div>
-          </>
-        )}
+      {/* Always show suggestions section */}
+      <div className="bg-white border-t">
+        <button
+          onClick={() => setShowSuggestions(!showSuggestions)}
+          className="w-full flex items-center justify-between px-4 py-2 text-sm text-gray-500 hover:bg-gray-50"
+        >
+          <div className="flex items-center gap-2">
+            <span className="italic">Suggested questions</span>
+            {!showSuggestions && suggestedQuestions.length > 0 && (
+              <span className="text-xs text-gray-400">
+                ({suggestedQuestions.length} available)
+              </span>
+            )}
+          </div>
+          {showSuggestions ? (
+            <ChevronUp className="h-4 w-4" />
+          ) : (
+            <ChevronDown className="h-4 w-4" />
+          )}
+        </button>
+        {renderSuggestionsContent()}
       </div>
+
       <form onSubmit={handleSubmit} className="p-4 border-t bg-white">
         <div className="flex gap-2">
           <input

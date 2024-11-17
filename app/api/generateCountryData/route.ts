@@ -2,18 +2,19 @@ import { NextResponse } from 'next/server';
 
 export async function POST(request: Request) {
 	try {
-		const { country, section } = await request.json();
+		const { country, section, language } = await request.json();
 
-		let prompt;
+		let prompt = `Generate information about ${country} in ${language}. `;
+
 		if (section === 'legal') {
-			prompt = `Generate legal immigration information for ${country}. Respond with ONLY a JSON object in the following format, with no additional text or formatting:
+			prompt += `Respond in ${language} with ONLY a JSON object in the following format, with no additional text or formatting:
     {
       "visaRequirements": "string describing visa requirements",
       "pathToResidency": "string describing path to residency",
       "requiredDocuments": ["array", "of", "required", "documents"]
     }`;
 		} else if (section === 'quality') {
-			prompt = `Generate quality of life information for ${country}. Respond with ONLY a JSON object in the following format, with no additional text or formatting:
+			prompt += `Generate quality of life information for ${country} in ${language}. Respond with ONLY a JSON object in the following format, with no additional text or formatting:
       {
         "healthcare": {
           "system": "string describing the healthcare system",
@@ -36,7 +37,7 @@ export async function POST(request: Request) {
         }
       }`;
 		} else if (section === 'work') {
-			prompt = `Generate comprehensive work and employment information for ${country}. Respond with ONLY a JSON object in the following format, with no additional text or formatting:
+			prompt += `Generate comprehensive work and employment information for ${country} in ${language}. Respond with ONLY a JSON object in the following format, with no additional text or formatting:
       {
         "jobMarket": {
           "overview": "string describing the current job market",
@@ -61,7 +62,7 @@ export async function POST(request: Request) {
         }
       }`;
 		} else if (section === 'culture') {
-			prompt = `Generate comprehensive cultural information for ${country}. Respond with ONLY a JSON object in the following format, with no additional text or formatting:
+			prompt += `Generate comprehensive cultural information for ${country} in ${language}. Respond with ONLY a JSON object in the following format, with no additional text or formatting:
       {
         "society": {
           "values": ["array of core societal values"],
@@ -89,7 +90,7 @@ export async function POST(request: Request) {
         }
       }`;
 		} else if (section === 'cities') {
-			prompt = `Generate comprehensive city information for ${country}. Respond with ONLY a JSON object in the following format, with no additional text or formatting:
+			prompt += `Generate comprehensive city information for ${country} in ${language}. Respond with ONLY a JSON object in the following format, with no additional text or formatting:
       {
         "capital": {
           "name": "string",
@@ -130,8 +131,7 @@ export async function POST(request: Request) {
 					messages: [
 						{
 							role: 'system',
-							content:
-								'You are a helpful assistant that responds only with valid JSON objects.',
+							content: `You are a helpful assistant that responds only with valid JSON objects. All text content should be in ${language}.`,
 						},
 						{
 							role: 'user',

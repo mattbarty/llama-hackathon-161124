@@ -1,6 +1,7 @@
 'use client';
 
 import { createContext, useContext, useState, ReactNode } from 'react';
+import { useLanguage } from './LanguageContext';
 
 export interface LegalData {
   visaRequirements: string;
@@ -103,11 +104,11 @@ interface CountryData {
 
 interface CountryDataContextType {
   countryData: Record<string, CountryData>;
-  getLegalData: (country: string) => Promise<LegalData>;
-  getQualityData: (country: string) => Promise<QualityData>;
-  getWorkData: (country: string) => Promise<WorkData>;
-  getCultureData: (country: string) => Promise<CultureData>;
-  getCitiesData: (country: string) => Promise<CitiesData>;
+  getLegalData: (country: string, forceRefresh?: boolean) => Promise<LegalData>;
+  getQualityData: (country: string, forceRefresh?: boolean) => Promise<QualityData>;
+  getWorkData: (country: string, forceRefresh?: boolean) => Promise<WorkData>;
+  getCultureData: (country: string, forceRefresh?: boolean) => Promise<CultureData>;
+  getCitiesData: (country: string, forceRefresh?: boolean) => Promise<CitiesData>;
   getAllCountryData: (country: string) => Promise<{
     legal: LegalData;
     quality: QualityData;
@@ -123,9 +124,10 @@ const CountryDataContext = createContext<CountryDataContextType | undefined>(und
 export function CountryDataProvider({ children }: { children: ReactNode; }) {
   const [countryData, setCountryData] = useState<Record<string, CountryData>>({});
   const [isLoading, setIsLoading] = useState(false);
+  const { language } = useLanguage();
 
-  const getLegalData = async (country: string): Promise<LegalData> => {
-    if (countryData[country]?.legal) {
+  const getLegalData = async (country: string, forceRefresh?: boolean): Promise<LegalData> => {
+    if (!forceRefresh && countryData[country]?.legal) {
       return countryData[country].legal!;
     }
 
@@ -138,7 +140,8 @@ export function CountryDataProvider({ children }: { children: ReactNode; }) {
         },
         body: JSON.stringify({
           country,
-          section: 'legal'
+          section: 'legal',
+          language: language
         }),
       });
 
@@ -161,8 +164,8 @@ export function CountryDataProvider({ children }: { children: ReactNode; }) {
     }
   };
 
-  const getQualityData = async (country: string): Promise<QualityData> => {
-    if (countryData[country]?.quality) {
+  const getQualityData = async (country: string, forceRefresh?: boolean): Promise<QualityData> => {
+    if (!forceRefresh && countryData[country]?.quality) {
       return countryData[country].quality!;
     }
 
@@ -175,7 +178,8 @@ export function CountryDataProvider({ children }: { children: ReactNode; }) {
         },
         body: JSON.stringify({
           country,
-          section: 'quality'
+          section: 'quality',
+          language: language
         }),
       });
 
@@ -198,8 +202,8 @@ export function CountryDataProvider({ children }: { children: ReactNode; }) {
     }
   };
 
-  const getWorkData = async (country: string): Promise<WorkData> => {
-    if (countryData[country]?.work) {
+  const getWorkData = async (country: string, forceRefresh?: boolean): Promise<WorkData> => {
+    if (!forceRefresh && countryData[country]?.work) {
       return countryData[country].work!;
     }
 
@@ -212,7 +216,8 @@ export function CountryDataProvider({ children }: { children: ReactNode; }) {
         },
         body: JSON.stringify({
           country,
-          section: 'work'
+          section: 'work',
+          language: language
         }),
       });
 
@@ -235,8 +240,8 @@ export function CountryDataProvider({ children }: { children: ReactNode; }) {
     }
   };
 
-  const getCultureData = async (country: string): Promise<CultureData> => {
-    if (countryData[country]?.culture) {
+  const getCultureData = async (country: string, forceRefresh?: boolean): Promise<CultureData> => {
+    if (!forceRefresh && countryData[country]?.culture) {
       return countryData[country].culture!;
     }
 
@@ -249,7 +254,8 @@ export function CountryDataProvider({ children }: { children: ReactNode; }) {
         },
         body: JSON.stringify({
           country,
-          section: 'culture'
+          section: 'culture',
+          language: language
         }),
       });
 
@@ -272,8 +278,8 @@ export function CountryDataProvider({ children }: { children: ReactNode; }) {
     }
   };
 
-  const getCitiesData = async (country: string): Promise<CitiesData> => {
-    if (countryData[country]?.cities) {
+  const getCitiesData = async (country: string, forceRefresh?: boolean): Promise<CitiesData> => {
+    if (!forceRefresh && countryData[country]?.cities) {
       return countryData[country].cities!;
     }
 
@@ -286,7 +292,8 @@ export function CountryDataProvider({ children }: { children: ReactNode; }) {
         },
         body: JSON.stringify({
           country,
-          section: 'cities'
+          section: 'cities',
+          language: language
         }),
       });
 
@@ -310,34 +317,35 @@ export function CountryDataProvider({ children }: { children: ReactNode; }) {
   };
 
   const getAllCountryData = async (country: string) => {
-    setIsLoading(true);
+    const sections = ['legal', 'quality', 'work', 'culture', 'cities'];
+    const data: any = {};
+
     try {
-      const [legal, quality, work, culture, cities] = await Promise.all([
-        getLegalData(country),
-        getQualityData(country),
-        getWorkData(country),
-        getCultureData(country),
-        getCitiesData(country)
-      ]);
+      const promises = sections.map(async (section) => {
+        const response = await fetch('/api/generateCountryData', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            country,
+            section,
+            language: language
+          }),
+        });
+
+        const result = await response.json();
+        data[section] = result;
+      });
+
+      await Promise.all(promises);
 
       setCountryData(prev => ({
         ...prev,
-        [country]: {
-          legal,
-          quality,
-          work,
-          culture,
-          cities
-        }
+        [country]: data
       }));
 
-      return {
-        legal,
-        quality,
-        work,
-        culture,
-        cities
-      };
+      return data;
     } catch (error) {
       console.error('Failed to load all country data:', error);
       throw error;

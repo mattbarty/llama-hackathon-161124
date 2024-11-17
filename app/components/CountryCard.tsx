@@ -1,11 +1,14 @@
+'use client';
+
 import React, { useState, useEffect } from 'react';
 
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { Globe2, Building2, Heart, Briefcase, Users, Home, BookOpen, Scale, ChevronLeft, X, Star } from 'lucide-react';
+import { Globe2, Building2, Heart, Briefcase, Users, Home, BookOpen, Scale, ChevronLeft, X, Star, RefreshCw } from 'lucide-react';
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { CitiesData, CityData, CultureData, QualityData, useCountryData } from '@/app/contexts/CountryDataContext';
 import { LegalData, WorkData } from '@/app/contexts/CountryDataContext';
+import { useLanguage } from '@/app/contexts/LanguageContext';
 
 interface CountryCardProps {
   country: string;
@@ -101,6 +104,7 @@ const CountryCard = ({ country = "Japan", onClose }: CountryCardProps) => {
     culture: false,
     cities: false
   });
+  const { language } = useLanguage();
 
   // Load data only when tab is selected
   useEffect(() => {
@@ -174,144 +178,92 @@ const CountryCard = ({ country = "Japan", onClose }: CountryCardProps) => {
     });
   }, [country]);
 
+  // Add refresh handler
+  const handleRefresh = async () => {
+    setIsTabLoading(true);
+    try {
+      let data;
+      switch (activeTab) {
+        case 'immigration':
+          data = await getLegalData(country, true);
+          setLegalData(data);
+          break;
+        case 'quality':
+          data = await getQualityData(country, true);
+          setQualityData(data);
+          break;
+        case 'work':
+          data = await getWorkData(country, true);
+          setWorkData(data);
+          break;
+        case 'culture':
+          data = await getCultureData(country, true);
+          setCultureData(data);
+          break;
+        case 'living':
+          data = await getCitiesData(country, true);
+          setCitiesData(data);
+          break;
+      }
+      // Reset the loaded state for this tab
+      setDataLoaded(prev => ({
+        ...prev,
+        [activeTab === 'immigration' ? 'legal' : activeTab]: true
+      }));
+    } catch (error) {
+      console.error(`Failed to refresh ${activeTab} data:`, error);
+    } finally {
+      setIsTabLoading(false);
+    }
+  };
+
   const renderCityList = () => {
+    if (!citiesData) {
+      return (
+        <div className="text-center text-gray-500 py-4">
+          Loading city information...
+        </div>
+      );
+    }
+
     const capital = citiesData?.capital;
     const otherCities = citiesData?.majorCities || [];
 
     return (
-      <div className="space-y-6 h-full">
+      <div className="space-y-6">
         {/* Capital City Card */}
         {capital && (
-          <div>
-            <div>
-              <h3 className="text-sm font-semibold text-gray-500 mb-3">Capital City</h3>
-            </div>
-            <div
-              onClick={() => setSelectedCity(capital.name)}
-              className="group relative overflow-hidden rounded-lg border shadow-sm hover:shadow-md transition-all cursor-pointer"
-            >
-              <div className="h-full border-b border-gray-200 relative">
-                <div className="relative z-10">
-                  <div className="flex items-center gap-1 text-xs font-semibold top-2 right-2 absolute bg-teal-500 px-2 py-1 rounded-[14px] text-white">
-                    Capital
-                  </div>
-                </div>
-                <div
-                  className="bg-gradient-to-br from-teal-100 to-teal-50 w-full h-full absolute top-0 left-0"
-                />
+          <div
+            onClick={() => setSelectedCity(capital.name)}
+            className="bg-white rounded-lg border p-4 hover:border-blue-200 transition-colors duration-200 cursor-pointer"
+          >
+            <div className="flex justify-between items-start mb-2">
+              <div className="flex items-center gap-2">
+                <h4 className="font-medium">{capital.name}</h4>
+                <span className="px-2 py-0.5 text-xs bg-blue-100 text-blue-800 rounded-full">Capital</span>
               </div>
-              <div className="p-6 bg-white">
-                <div className="flex justify-between items-start">
-                  <div className="flex w-full justify-between items-center">
-                    <h3 className="font-semibold text-xl group-hover:text-blue-600 transition-colors">
-                      {capital.name}
-                    </h3>
-                    <p className="text-sm text-gray-500">{capital.population}</p>
-                  </div>
-                </div>
-                <p className="text-sm text-gray-600 mt-2">
-                  {capital.description}
-                </p>
-                <div className="flex gap-2 mt-4">
-                  <span className="text-xs px-2 py-1 bg-gray-100 rounded-[14px] text-gray-600">
-                    {capital.climate}
-                  </span>
-                  <span className="text-xs px-2 py-1 bg-gray-100 rounded-[14px] text-gray-600">
-                    {capital.costOfLiving}
-                  </span>
-                </div>
-              </div>
+              <span className="text-sm text-gray-500">{capital.population}</span>
             </div>
+            <p className="text-sm text-gray-600 line-clamp-2">{capital.description}</p>
           </div>
         )}
 
-        {/* Other Cities Grid */}
+        {/* Major Cities Grid */}
         <div>
-          <h3 className="text-sm font-semibold text-gray-500 mb-3">Major Cities</h3>
-          <div className="flex flex-col gap-4">
-            {otherCities.map((city) => (
+          <h3 className="font-medium mb-3">Major Cities</h3>
+          <div className="grid grid-cols-1 gap-4">
+            {otherCities.map((city, index) => (
               <div
-                key={city.name}
+                key={index}
                 onClick={() => setSelectedCity(city.name)}
-                className="group relative overflow-hidden rounded-lg border shadow-sm hover:shadow-md transition-all cursor-pointer"
+                className="bg-white rounded-lg border p-4 hover:border-blue-200 transition-colors duration-200 cursor-pointer"
               >
-                <div className="p-4 bg-white">
-                  <div className="flex justify-between items-start">
-                    <div className="flex w-full justify-between items-center">
-                      <h3 className="font-semibold text-lg group-hover:text-blue-600 transition-colors">
-                        {city.name}
-                      </h3>
-                      <p className="text-sm text-gray-500">{city.population}</p>
-                    </div>
-                  </div>
-                  <p className="text-sm text-gray-600 mt-2 line-clamp-2">
-                    {city.description}
-                  </p>
-                  <div className="flex gap-2 mt-3">
-                    <span className="text-xs px-2 py-1 bg-gray-100 rounded-[14px] text-gray-600">
-                      {city.climate}
-                    </span>
-                    <span className="text-xs px-2 py-1 bg-gray-100 rounded-[14px] text-gray-600">
-                      {city.costOfLiving}
-                    </span>
-                  </div>
+                <div className="flex justify-between items-start mb-2">
+                  <h4 className="font-medium">{city.name}</h4>
+                  <span className="text-sm text-gray-500">{city.population}</span>
                 </div>
+                <p className="text-sm text-gray-600 line-clamp-2">{city.description}</p>
               </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    );
-  };
-
-  const renderCityDetail = () => {
-    const cityInfo = citiesData?.majorCities.find(c => c.name === selectedCity);
-    if (!cityInfo) return null;
-
-    return (
-      <div className="space-y-6">
-        <button
-          onClick={() => setSelectedCity(null)}
-          className="flex items-center text-sm text-gray-600 hover:text-gray-900"
-        >
-          <ChevronLeft size={16} />
-          <span>Back to cities</span>
-        </button>
-
-        <div>
-          <h2 className="text-xl font-semibold mb-2">{cityInfo.name}</h2>
-          <p className="text-sm text-gray-600 mb-6">{cityInfo.description}</p>
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <h3 className="font-semibold">Population</h3>
-            <p className="text-sm text-gray-600">{cityInfo.population}</p>
-          </div>
-          <div className="space-y-2">
-            <h3 className="font-semibold">Cost of Living</h3>
-            <p className="text-sm text-gray-600">{cityInfo.costOfLiving}</p>
-          </div>
-          <div className="space-y-2">
-            <h3 className="font-semibold">Internet Speed</h3>
-            <p className="text-sm text-gray-600">{cityInfo.internetSpeed}</p>
-          </div>
-          <div className="space-y-2">
-            <h3 className="font-semibold">Climate</h3>
-            <p className="text-sm text-gray-600">{cityInfo.climate}</p>
-          </div>
-        </div>
-
-        <div className="space-y-2">
-          <h3 className="font-semibold">Popular Neighborhoods</h3>
-          <div className="flex flex-wrap gap-2">
-            {cityInfo.neighborhoods.map((neighborhood: string) => (
-              <span
-                key={neighborhood}
-                className="px-2 py-1 bg-gray-100 rounded-[14px] text-sm text-gray-600"
-              >
-                {neighborhood}
-              </span>
             ))}
           </div>
         </div>
@@ -320,16 +272,32 @@ const CountryCard = ({ country = "Japan", onClose }: CountryCardProps) => {
   };
 
   return (
-    <div className="h-full overflow-auto">
-      {/* Header */}
-      <div className="flex justify-between items-center p-4 flex-shrink-0">
-        <h1 className="text-2xl font-semibold">{country}</h1>
-        <button
-          onClick={onClose}
-          className="p-1 hover:bg-gray-100 rounded-[14px] transition-colors"
-        >
-          <X size={20} className="text-gray-500" />
-        </button>
+    <div className="h-full flex flex-col">
+      {/* Header with refresh and close buttons */}
+      <div className="flex items-center justify-between p-4 border-b">
+        <div className="flex items-center gap-2">
+          <Globe2 className="h-5 w-5 text-gray-500" />
+          <h2 className="text-lg font-semibold">{country}</h2>
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handleRefresh}
+            disabled={isTabLoading || isLoading}
+            className={`p-2 rounded-full transition-colors duration-200 ${isTabLoading || isLoading
+              ? 'text-gray-300 cursor-not-allowed'
+              : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'
+              }`}
+            title="Refresh current tab"
+          >
+            <RefreshCw className={`h-4 w-4 ${isTabLoading || isLoading ? 'animate-spin' : ''}`} />
+          </button>
+          <button
+            onClick={onClose}
+            className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-full transition-colors duration-200"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
       </div>
 
       {/* Tabs */}
@@ -338,7 +306,7 @@ const CountryCard = ({ country = "Japan", onClose }: CountryCardProps) => {
           <TabsTrigger
             value="living"
             className="flex flex-col items-center p-2"
-            disabled={isTabLoading}
+            disabled={isTabLoading || isLoading}
           >
             <Building2 size={16} />
             <span className="text-xs mt-1">Cities</span>
@@ -346,7 +314,7 @@ const CountryCard = ({ country = "Japan", onClose }: CountryCardProps) => {
           <TabsTrigger
             value="immigration"
             className="flex flex-col items-center p-2"
-            disabled={isTabLoading}
+            disabled={isTabLoading || isLoading}
           >
             <Scale size={16} />
             <span className="text-xs mt-1">Legal</span>
@@ -354,7 +322,7 @@ const CountryCard = ({ country = "Japan", onClose }: CountryCardProps) => {
           <TabsTrigger
             value="quality"
             className="flex flex-col items-center p-2"
-            disabled={isTabLoading}
+            disabled={isTabLoading || isLoading}
           >
             <Heart size={16} />
             <span className="text-xs mt-1">Quality</span>
@@ -362,7 +330,7 @@ const CountryCard = ({ country = "Japan", onClose }: CountryCardProps) => {
           <TabsTrigger
             value="work"
             className="flex flex-col items-center p-2"
-            disabled={isTabLoading}
+            disabled={isTabLoading || isLoading}
           >
             <Briefcase size={16} />
             <span className="text-xs mt-1">Work</span>
@@ -370,7 +338,7 @@ const CountryCard = ({ country = "Japan", onClose }: CountryCardProps) => {
           <TabsTrigger
             value="culture"
             className="flex flex-col items-center p-2"
-            disabled={isTabLoading}
+            disabled={isTabLoading || isLoading}
           >
             <Users size={16} />
             <span className="text-xs mt-1">Culture</span>
@@ -380,75 +348,38 @@ const CountryCard = ({ country = "Japan", onClose }: CountryCardProps) => {
         <div className="flex-1 min-h-0">
           <TabsContent value="living" className="h-full data-[state=active]:flex flex-col">
             <ScrollArea className="flex-1">
-              <div className="space-y-6 px-4 py-2">
-                {isLoading ? (
+              <div className="px-4 py-2">
+                {isTabLoading ? (
                   <div className="flex items-center justify-center h-full">
                     <div className="animate-spin rounded-[14px] h-8 w-8 border-b-2 border-gray-900" />
                   </div>
-                ) : citiesData ? (
-                  <>
-                    {selectedCity ? (
-                      <>
-                        <div className="flex items-center gap-2 mb-6">
-                          <button
-                            onClick={() => setSelectedCity(null)}
-                            className="flex items-center text-sm text-blue-600 hover:text-blue-800"
-                          >
-                            <ChevronLeft className="h-4 w-4" />
-                            Back to cities
-                          </button>
-                        </div>
-                        <div className="space-y-4">
-                          {selectedCity === citiesData.capital.name ? (
-                            <CityDetails city={citiesData.capital} />
-                          ) : (
-                            <CityDetails
-                              city={citiesData.majorCities.find(city => city.name === selectedCity)!}
-                            />
-                          )}
-                        </div>
-                      </>
-                    ) : (
-                      <>
-                        <div className="space-y-4">
-                          <h3 className="font-semibold text-lg">Capital City</h3>
-                          <div
-                            className="p-4 rounded-lg border hover:border-blue-500 cursor-pointer transition-colors"
-                            onClick={() => setSelectedCity(citiesData.capital.name)}
-                          >
-                            <div className="flex justify-between items-start mb-2">
-                              <h4 className="font-medium">{citiesData.capital.name}</h4>
-                              <span className="text-sm text-gray-500">{citiesData.capital.population}</span>
-                            </div>
-                            <p className="text-sm text-gray-600 line-clamp-2">{citiesData.capital.description}</p>
-                          </div>
-                        </div>
+                ) : selectedCity ? (
+                  <div className="space-y-6">
+                    <button
+                      onClick={() => setSelectedCity(null)}
+                      className="flex items-center text-sm text-gray-600 hover:text-gray-900"
+                    >
+                      <ChevronLeft size={16} />
+                      <span>Back to cities</span>
+                    </button>
+                    {citiesData && (
+                      (() => {
+                        const cityData = citiesData.capital.name === selectedCity
+                          ? citiesData.capital
+                          : citiesData.majorCities.find(c => c.name === selectedCity);
 
-                        <div className="space-y-4">
-                          <h3 className="font-semibold text-lg">Major Cities</h3>
-                          <div className="space-y-3">
-                            {citiesData.majorCities.map((city, index) => (
-                              <div
-                                key={index}
-                                className="p-4 rounded-lg border hover:border-blue-500 cursor-pointer transition-colors"
-                                onClick={() => setSelectedCity(city.name)}
-                              >
-                                <div className="flex justify-between items-start mb-2">
-                                  <h4 className="font-medium">{city.name}</h4>
-                                  <span className="text-sm text-gray-500">{city.population}</span>
-                                </div>
-                                <p className="text-sm text-gray-600 line-clamp-2">{city.description}</p>
-                              </div>
-                            ))}
+                        return cityData ? (
+                          <CityDetails city={cityData} />
+                        ) : (
+                          <div className="text-center text-gray-500">
+                            City information not found
                           </div>
-                        </div>
-                      </>
+                        );
+                      })()
                     )}
-                  </>
-                ) : (
-                  <div className="text-center text-gray-500">
-                    Failed to load city information
                   </div>
+                ) : (
+                  renderCityList()
                 )}
               </div>
             </ScrollArea>
@@ -796,7 +727,7 @@ const CountryCard = ({ country = "Japan", onClose }: CountryCardProps) => {
   );
 };
 
-// Add CityDetails component
+// Update CityDetails component with proper type checking
 const CityDetails = ({ city }: { city: CityData; }) => (
   <>
     <div className="flex justify-between items-start">
