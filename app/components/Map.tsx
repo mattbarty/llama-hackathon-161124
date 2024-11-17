@@ -13,6 +13,7 @@ import { Plane, Navigation, Search, Globe } from 'lucide-react';
 import { UserProfile } from "./UserProfile";
 import { useUser } from '@/app/contexts/UserContext';
 import CountryCard from '@/app/components/CountryCard';
+import { useTheme } from "@/app/contexts/ThemeContext";
 
 interface MapProps {
   isChatVisible: boolean;
@@ -21,6 +22,7 @@ interface MapProps {
 }
 
 const Map = forwardRef(({ isChatVisible, onCountrySelect, selectedCountry }: MapProps, ref) => {
+  const { theme } = useTheme();
   const mapRef = useRef<mapboxgl.Map | null>(null);
   const markerRef = useRef<mapboxgl.Marker | null>(null);
   const geocoderRef = useRef<MapboxGeocoder | null>(null);
@@ -100,7 +102,7 @@ const Map = forwardRef(({ isChatVisible, onCountrySelect, selectedCountry }: Map
 
     const map = new mapboxgl.Map({
       container: 'map',
-      style: 'mapbox://styles/mapbox/light-v11',
+      style: `mapbox://styles/mapbox/${theme}-v11`,
       center: [0, 0],
       zoom: 2,
       projection: 'globe'
@@ -262,6 +264,13 @@ const Map = forwardRef(({ isChatVisible, onCountrySelect, selectedCountry }: Map
       }
     }
   }));
+
+  // Add new effect to handle theme changes
+  useEffect(() => {
+    if (mapRef.current) {
+      mapRef.current.setStyle(`mapbox://styles/mapbox/${theme}-v11`);
+    }
+  }, [theme]);
 
   return (
     <div className="relative h-full w-full overflow-hidden bg-black">
