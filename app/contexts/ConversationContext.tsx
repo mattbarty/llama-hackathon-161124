@@ -3,8 +3,9 @@
 import { createContext, useContext, useState, ReactNode } from 'react';
 
 interface Message {
-  role: 'user' | 'assistant';
+  role: 'system' | 'user' | 'assistant';
   content: string;
+  name?: string;
 }
 
 interface ConversationContextType {

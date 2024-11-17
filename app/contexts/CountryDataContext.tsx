@@ -108,6 +108,13 @@ interface CountryDataContextType {
   getWorkData: (country: string) => Promise<WorkData>;
   getCultureData: (country: string) => Promise<CultureData>;
   getCitiesData: (country: string) => Promise<CitiesData>;
+  getAllCountryData: (country: string) => Promise<{
+    legal: LegalData;
+    quality: QualityData;
+    work: WorkData;
+    culture: CultureData;
+    cities: CitiesData;
+  }>;
   isLoading: boolean;
 }
 
@@ -302,6 +309,43 @@ export function CountryDataProvider({ children }: { children: ReactNode; }) {
     }
   };
 
+  const getAllCountryData = async (country: string) => {
+    setIsLoading(true);
+    try {
+      const [legal, quality, work, culture, cities] = await Promise.all([
+        getLegalData(country),
+        getQualityData(country),
+        getWorkData(country),
+        getCultureData(country),
+        getCitiesData(country)
+      ]);
+
+      setCountryData(prev => ({
+        ...prev,
+        [country]: {
+          legal,
+          quality,
+          work,
+          culture,
+          cities
+        }
+      }));
+
+      return {
+        legal,
+        quality,
+        work,
+        culture,
+        cities
+      };
+    } catch (error) {
+      console.error('Failed to load all country data:', error);
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <CountryDataContext.Provider value={{
       countryData,
@@ -310,6 +354,7 @@ export function CountryDataProvider({ children }: { children: ReactNode; }) {
       getWorkData,
       getCultureData,
       getCitiesData,
+      getAllCountryData,
       isLoading
     }}>
       {children}

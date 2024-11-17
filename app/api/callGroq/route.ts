@@ -3,19 +3,21 @@ import Groq from 'groq-sdk';
 
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
+interface ChatMessage {
+	role: 'system' | 'user' | 'assistant';
+	content: string;
+	name?: string;
+}
+
 export async function POST(request: Request) {
 	try {
-		const body = await request.json();
-		const userMessage = body.message;
+		const { messages } = await request.json();
 
 		const chatCompletion = await groq.chat.completions.create({
-			messages: [
-				{
-					role: 'user',
-					content: userMessage,
-				},
-			],
-			model: 'llama3-8b-8192',
+			messages: messages as ChatMessage[],
+			model: 'llama-3.2-3b-preview',
+			temperature: 0.7,
+			max_tokens: 4096,
 		});
 
 		return NextResponse.json({
