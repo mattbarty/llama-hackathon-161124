@@ -368,8 +368,8 @@ const CountryCard = ({ country = "Japan", onClose }: CountryCardProps) => {
             onClick={handleRefresh}
             disabled={isTabLoading || isLoading}
             className={`p-2 rounded-full transition-colors duration-200 ${isTabLoading || isLoading
-                ? 'text-gray-300 cursor-not-allowed'
-                : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'
+              ? 'text-gray-300 cursor-not-allowed'
+              : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'
               }`}
             title="Refresh current tab"
           >

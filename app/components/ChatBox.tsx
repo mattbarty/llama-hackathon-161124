@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Send } from 'lucide-react';
+import { Send, RefreshCw } from 'lucide-react';
 import InteractiveMessage from './InteractiveMessage';
 import { useConversation } from '../contexts/ConversationContext';
 import { CitiesData, WorkData, LegalData, QualityData, CultureData } from '../contexts/CountryDataContext';
@@ -43,6 +43,7 @@ export default function ChatBox({ country, countryData }: ChatBoxProps) {
   const [suggestedQuestions, setSuggestedQuestions] = useState<SuggestedQuestion[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { language } = useLanguage();
+  const [isRefreshingSuggestions, setIsRefreshingSuggestions] = useState(false);
 
   // Function to fetch suggested questions
   const fetchSuggestedQuestions = async (lastResponse: string) => {
@@ -246,6 +247,45 @@ Guidelines:
     }
   };
 
+  // Add refresh handler for suggestions
+  const handleRefreshSuggestions = async () => {
+    if (isRefreshingSuggestions || messages.length === 0) return;
+
+    setIsRefreshingSuggestions(true);
+    const lastMessage = messages[messages.length - 1];
+
+    try {
+      const response = await fetch('/api/callGroq', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messages: [
+            {
+              role: 'system',
+              content: 'You are a helpful assistant. Based on the previous response and available country data, suggest 3 different relevant follow-up questions. Return ONLY a JSON array of questions, no other text. Format: ["question1", "question2", "question3"]'
+            },
+            {
+              role: 'user',
+              content: `Previous response: "${lastMessage.content}". Suggest 3 new relevant follow-up questions about ${country}.`
+            }
+          ],
+          language: language
+        }),
+      });
+
+      const data = await response.json();
+      if (data.error) throw new Error(data.error);
+
+      const questions = JSON.parse(data.message);
+      setSuggestedQuestions(questions.map((text: string) => ({ text })));
+    } catch (error) {
+      console.error('Failed to refresh suggested questions:', error);
+      setSuggestedQuestions([]);
+    } finally {
+      setIsRefreshingSuggestions(false);
+    }
+  };
+
   return (
     <div className="flex flex-col h-full bg-gray-50">
       <div className="flex items-center justify-between px-4 py-2 bg-white border-b">
@@ -293,20 +333,35 @@ Guidelines:
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Suggested questions */}
+      {/* Suggested questions with refresh button */}
       <div className="flex flex-col justify-center bg-white border-t pt-2">
         {suggestedQuestions.length > 0 && (
           <>
-            <p className="px-2 text-sm text-gray-500 italic">Suggested questions - click to ask</p>
-            <div className="flex flex-wrap gap-1 px-4 py-2 ">
+            <div className="flex items-center justify-between px-2">
+              <p className="text-sm text-gray-500 italic">Suggested questions - click to ask</p>
+              <button
+                onClick={handleRefreshSuggestions}
+                disabled={isRefreshingSuggestions || isLoading}
+                className={`p-1.5 rounded-full transition-colors duration-200 ${isRefreshingSuggestions || isLoading
+                    ? 'text-gray-300 cursor-not-allowed'
+                    : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'
+                  }`}
+                title="Refresh suggestions"
+              >
+                <RefreshCw
+                  className={`h-3.5 w-3.5 ${isRefreshingSuggestions ? 'animate-spin' : ''}`}
+                />
+              </button>
+            </div>
+            <div className="flex flex-wrap gap-1 px-4 py-2">
               {suggestedQuestions.map((question, index) => (
                 <button
                   key={index}
                   onClick={() => handleSuggestedQuestion(question.text)}
-                  disabled={isLoading}
+                  disabled={isLoading || isRefreshingSuggestions}
                   className="px-3 py-1 text-sm text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-[6px] transition-colors duration-200 text-left"
                 >
-                  &quot; {question.text} &quot;
+                  &quot;{question.text}&quot;
                 </button>
               ))}
             </div>
