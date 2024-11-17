@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/resizable";
 import { Header } from './components/Header';
 import { ThemeProvider } from '@/app/contexts/ThemeContext';
+import { InitialOverlay } from './components/InitialOverlay';
 
 export default function Home() {
   const user = useUser();
@@ -33,6 +34,7 @@ export default function Home() {
 
   return (
     <ThemeProvider>
+      <InitialOverlay />
       <Header />
       <main className="flex h-screen w-screen overflow-hidden items-center justify-center pt-16">
         <ConversationProvider>
