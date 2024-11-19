@@ -40,7 +40,7 @@ export function UserProfile() {
           <CardHeader className="pb-4">
             <CardTitle>Made with ❤️ by <a href="https://www.mattbarty.com/projects" target="_blank" rel="noopener noreferrer" className="underline text-teal-500 hover:text-teal-600 transition-colors duration-300 font-bold">Matt Barty</a></CardTitle>
             <CardDescription>
-              Submission for Meta's <a href="https://www.linkedin.com/posts/meta-for-developers_llama-impact-hackathon-london-activity-7263240512374026241-ATpy/" target="_blank" rel="noopener noreferrer" className="underline text-teal-500 hover:text-teal-600 transition-colors duration-300">LLama Impact Hackathon 2024</a>, London
+              Submission for Meta&apos;s <a href="https://www.linkedin.com/posts/meta-for-developers_llama-impact-hackathon-london-activity-7263240512374026241-ATpy/" target="_blank" rel="noopener noreferrer" className="underline text-teal-500 hover:text-teal-600 transition-colors duration-300">LLama Impact Hackathon 2024</a>, London
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -49,7 +49,7 @@ export function UserProfile() {
               <li>This app was built in 24 hours for the hackathon and is likely laden with bugs,</li>
               <li>Not intended for production use,</li>
               <li>Will break when my free credits run out,</li>
-              <li>If it stops working, please contact me on <a href="https://www.linkedin.com/in/matthew-barty/" target="_blank" rel="noopener noreferrer" className="underline text-teal-500 hover:text-teal-600 transition-colors duration-300">LinkedIn</a> and I'll try to fix it,</li>
+              <li>If it stops working, please contact me on <a href="https://www.linkedin.com/in/matthew-barty/" target="_blank" rel="noopener noreferrer" className="underline text-teal-500 hover:text-teal-600 transition-colors duration-300">LinkedIn</a> and I&apos;ll try to fix it,</li>
               <li>Have fun !</li>
             </ul>
           </CardContent>
