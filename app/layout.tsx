@@ -4,6 +4,7 @@ import { CountryDataProvider } from "./contexts/CountryDataContext";
 import { LanguageProvider } from './contexts/LanguageContext';
 import './globals.css';
 import { ConversationProvider } from "./contexts/ConversationContext";
+import { Analytics } from '@vercel/analytics/next';
 
 export const metadata: Metadata = {
   title: "llama-hackathon",
@@ -23,6 +24,7 @@ export default function RootLayout({
             <CountryDataProvider>
               <ConversationProvider>
                 {children}
+                <Analytics />
               </ConversationProvider>
             </CountryDataProvider>
           </UserProvider>
