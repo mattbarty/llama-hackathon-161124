@@ -38,43 +38,20 @@ export function UserProfile() {
       <DropdownMenuContent className="w-80" align="end" forceMount>
         <Card className="border-0 shadow-none">
           <CardHeader className="pb-4">
-            <CardTitle>User Profile</CardTitle>
+            <CardTitle>Made with ❤️ by <a href="https://www.mattbarty.com/projects" target="_blank" rel="noopener noreferrer" className="underline text-teal-500 hover:text-teal-600 transition-colors duration-300 font-bold">Matt Barty</a></CardTitle>
             <CardDescription>
-              Your travel and professional information
+              Submission for Meta's <a href="https://www.linkedin.com/posts/meta-for-developers_llama-impact-hackathon-london-activity-7263240512374026241-ATpy/" target="_blank" rel="noopener noreferrer" className="underline text-teal-500 hover:text-teal-600 transition-colors duration-300">LLama Impact Hackathon 2024</a>, London
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="flex items-center space-x-4">
-              <MapPin className="h-5 w-5 text-muted-foreground" />
-              <div className="space-y-1">
-                <p className="text-sm font-medium">Current Location</p>
-                <p className="text-sm text-muted-foreground">
-                  {user.currentLocation}
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-start space-x-4">
-              <Book className="h-5 w-5 text-muted-foreground" />
-              <div className="space-y-1">
-                <p className="text-sm font-medium">Passports</p>
-                {user.passports.map((passport, index) => (
-                  <div key={index} className="text-sm text-muted-foreground">
-                    {passport.country} (Expires: {new Date(passport.expiryDate).getFullYear()})
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="flex items-center space-x-4">
-              <Briefcase className="h-5 w-5 text-muted-foreground" />
-              <div className="space-y-1">
-                <p className="text-sm font-medium">Industry Interest</p>
-                <p className="text-sm text-muted-foreground">
-                  {user.industryInterest}
-                </p>
-              </div>
-            </div>
+            <p className="text-sm font-bold">Please Note:</p>
+            <ul className="list-disc text-sm text-muted-foreground">
+              <li>This app was built in 24 hours for the hackathon and is likely laden with bugs,</li>
+              <li>Not intended for production use,</li>
+              <li>Will break when my free credits run out,</li>
+              <li>If it stops working, please contact me on <a href="https://www.linkedin.com/in/matthew-barty/" target="_blank" rel="noopener noreferrer" className="underline text-teal-500 hover:text-teal-600 transition-colors duration-300">LinkedIn</a> and I'll try to fix it,</li>
+              <li>Have fun !</li>
+            </ul>
           </CardContent>
         </Card>
       </DropdownMenuContent>
