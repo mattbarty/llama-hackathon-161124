@@ -118,31 +118,28 @@ export async function POST(request: Request) {
 			return NextResponse.json({ error: 'Invalid section' }, { status: 400 });
 		}
 
-		const response = await fetch(
-			'https://api.groq.com/openai/v1/chat/completions',
-			{
-				method: 'POST',
-				headers: {
-					Authorization: `Bearer ${process.env.GROQ_API_KEY}`,
-					'Content-Type': 'application/json',
-				},
-				body: JSON.stringify({
-					model: 'llama-3.2-3b-preview',
-					messages: [
-						{
-							role: 'system',
-							content: `You are a helpful assistant that responds only with valid JSON objects. All text content should be in ${language}.`,
-						},
-						{
-							role: 'user',
-							content: prompt,
-						},
-					],
-					temperature: 0.5,
-					max_tokens: 7500,
-				}),
-			}
-		);
+		const response = await fetch('https://api.openai.com/v1/chat/completions', {
+			method: 'POST',
+			headers: {
+				Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+				'Content-Type': 'application/json',
+			},
+			body: JSON.stringify({
+				model: 'gpt-4.1-nano',
+				messages: [
+					{
+						role: 'system',
+						content: `You are a helpful assistant that responds only with valid JSON objects. All text content should be in ${language}.`,
+					},
+					{
+						role: 'user',
+						content: prompt,
+					},
+				],
+				temperature: 0.5,
+				max_tokens: 7500,
+			}),
+		});
 
 		const data = await response.json();
 

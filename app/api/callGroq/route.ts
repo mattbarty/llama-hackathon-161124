@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
-import Groq from 'groq-sdk';
+import OpenAI from 'openai';
 
-const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 interface ChatMessage {
 	role: 'system' | 'user' | 'assistant';
@@ -18,9 +18,9 @@ export async function POST(request: Request) {
 			content: `You are a helpful assistant that responds in ${language}. Please provide all responses in ${language}.`,
 		};
 
-		const chatCompletion = await groq.chat.completions.create({
+		const chatCompletion = await openai.chat.completions.create({
 			messages: [systemMessage, ...messages] as ChatMessage[],
-			model: 'llama-3.2-3b-preview',
+			model: 'gpt-4.1-nano',
 			temperature: 0.7,
 			max_tokens: 4096,
 		});
@@ -29,9 +29,9 @@ export async function POST(request: Request) {
 			message: chatCompletion.choices[0]?.message?.content || '',
 		});
 	} catch (error) {
-		console.error('Groq API error:', error);
+		console.error('OpenAI API error:', error);
 		return NextResponse.json(
-			{ error: 'Failed to fetch from Groq API' },
+			{ error: 'Failed to fetch from OpenAI API' },
 			{ status: 500 }
 		);
 	}
